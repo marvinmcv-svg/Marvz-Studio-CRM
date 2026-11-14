@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+/* Squad CRM — calm, dense, dark. One accent (violet); status chips carry meaning. */
+@theme {
+  --color-bg: #0a0a0d;
+  --color-panel: #111116;
+  --color-panel-2: #17171e;
+  --color-panel-3: #1e1e27;
+  --color-line: #23232d;
+  --color-line-2: #2e2e3a;
+  --color-ink: #ececf2;
+  --color-ink-2: #a9a9b8;
+  --color-ink-3: #6f6f80;
+  --color-accent: #8b7cff;
+  --color-accent-2: #a99dff;
+  --color-accent-ink: #0d0b1f;
+
+  --font-sans: "Inter", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-feature-settings: "cv11", "ss01", "tnum";
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--color-accent) 40%, transparent);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-2) transparent;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@layer components {
+  /* grid/flex children may shrink below their content (prevents horizontal overflow) */
+  .grid > * {
+    min-width: 0;
+  }
+  .card {
+    @apply rounded-xl border border-line bg-panel;
+  }
+  .card-h {
+    @apply flex items-center justify-between gap-3 border-b border-line px-4 py-3;
+  }
+  .card-t {
+    @apply text-[12px] font-medium uppercase tracking-[0.06em] text-ink-3;
+  }
+  .btn {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-lg border border-line-2 bg-panel-2 px-3 text-[13px] font-medium text-ink transition-colors hover:bg-panel-3 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[13px] font-semibold text-accent-ink transition-colors hover:bg-accent-2 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-[13px] text-ink-2 transition-colors hover:bg-panel-2 hover:text-ink;
+  }
+  .input {
+    @apply h-8 w-full rounded-lg border border-line-2 bg-panel-2 px-2.5 text-[13px] text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none;
+  }
+  .label {
+    @apply mb-1 block text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3;
+  }
+  .kbd {
+    @apply inline-flex h-[18px] min-w-[18px] items-center justify-center rounded border border-line-2 bg-panel-2 px-1 font-mono text-[10px] text-ink-2;
+  }
+  .table-row {
+    @apply border-b border-line/70 transition-colors hover:bg-panel-2/60;
+  }
+  .th {
+    @apply sticky top-0 z-10 bg-panel px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3;
+  }
+  .td {
+    @apply px-3 py-2 align-middle;
+  }
+}

@@ -1,0 +1,5 @@
+project_id = "squad-crm"
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
