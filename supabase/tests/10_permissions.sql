@@ -141,7 +141,7 @@ begin
     update public.outreach_drafts set status = 'approved' where id = v_draft;
     raise exception 'self-approval should have failed';
   exception when others then
-    perform tests.eq(position('only letty' in lower(sqlerrm)) > 0, true, 'jordan cannot self-approve');
+    perform tests.eq(position('permission denied' in lower(sqlerrm)) > 0, true, 'jordan cannot self-approve (no direct draft writes)');
   end;
 
   r := public.submit_draft_batch(array[v_draft], 'test batch');
@@ -159,7 +159,7 @@ begin
     update public.leads set stage = 'sent' where id = v_lead;
     raise exception 'direct stage jump should have failed';
   exception when others then
-    perform tests.eq(position('without a sent' in sqlerrm) > 0, true, 'cannot mark sent by editing the table');
+    perform tests.eq(position('permission denied' in sqlerrm) > 0, true, 'cannot mark sent by editing the table');
   end;
   perform set_config('tests.batch', v_batch::text, false);
   perform set_config('tests.draft', v_draft::text, false);

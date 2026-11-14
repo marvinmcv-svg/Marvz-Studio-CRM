@@ -13,7 +13,7 @@ export const AGENT_RPCS: Record<string, { fn: string; does: string }[]> = {
     { fn: "submit_draft_batch", does: "Send drafts to Letty for batch approval" },
     { fn: "log_send", does: "Log a sent message — only for Letty-approved drafts" },
     { fn: "log_reply", does: "Prospect replied → hand to Quinn" },
-    { fn: "add_do_not_contact", does: "Block a business / contact" },
+    { fn: "add_do_not_contact", does: "Block a business / contact, every matching lead and their unsent drafts" },
   ],
   quinn: [
     { fn: "add_discovery_note", does: "Answer + where it came from (source is mandatory)" },

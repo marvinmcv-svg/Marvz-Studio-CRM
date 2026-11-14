@@ -31,11 +31,15 @@ Keyboard: `⌘K` or `/` opens search, `n` creates a new lead, `b` opens the deal
 ## Security model
 
 * Every squad member, human or AI, is a **Supabase Auth user** linked to a row in `public.agents`. Row Level Security reads the caller's identity from the token.
+* **Writes go through the RPCs.** Agents can read through RLS, but direct inserts, updates and deletes are refused on the pipeline-critical tables (leads, drafts, approval batches, deals, proposals, payments, projects, scopes, care plans, do-not-contact). Every write is validated and logged.
 * **RLS on every table.** Hunter writes leads. Jordan writes drafts and batches. Quinn writes discovery, deals and proposals. Dana writes delivery, care, testimonials and lessons. Top G and Letty can do everything. **Only Letty can write the catalogue.**
 * **Guard triggers** apply even to direct table edits:
-  * Stage moves are checked per role, and every move is written to `stage_changes` with the agent, time and reason.
+  * Stage moves are checked per role **and against the lead's current stage**: no skipping ahead, no moving backwards, no reviving lost or do-not-contact leads and no marking a signed client lost (Letty and Top G can correct anything). Every move is written to `stage_changes` with the agent, time and reason.
   * Jordan cannot approve his own drafts.
-  * A draft can only be sent once it is approved in an approved batch.
+  * A draft can only be sent once it is approved in an approved batch. Batches are created as pending, and a draft's content is locked once it is submitted.
+  * Adding a do-not-contact entry blocks every matching lead and cancels their unsent drafts; drafting and sending to a listed contact is refused.
+  * The 4-projects-a-month limit is enforced on the projects table, with a lock so two requests can't take the last slot.
+  * Only quoted or proposed deals can be signed, once; signing supersedes the lead's other open quotes.
   * Lessons are rejected if they mention a client or contact name, an email, a phone number, a URL or an @handle.
   * Only admins can resolve escalations.
 * `activity_log` and `stage_changes` are **append-only**. Agents have no insert, update or delete rights on them; only the security-definer RPCs write there.
@@ -62,7 +66,7 @@ Without Supabase keys the app runs in **demo mode**. It shows realistic sample d
    npx supabase link --project-ref <ref>
    npx supabase db push
    ```
-   or by pasting the four files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue.
+   or by pasting the five files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue; the fifth adds the hardening rules.
 3. Optional demo data: run `supabase/seed.sql` in the SQL editor. Remove it before going live with `supabase/demo_cleanup.sql`, which keeps the team and catalogue.
 4. Check **Database → Publications → supabase_realtime** includes `activity_log`. The migration adds it, which drives live refresh.
 5. **Turn off public sign-ups** (Authentication → Sign In / Providers → *Allow new users to sign up* = off). Strangers who sign up still can't see anything (every policy and RPC requires a squad member, and the tests cover this), but there is no reason to allow it.
@@ -167,6 +171,7 @@ npm run build
 * quote arithmetic (US and MX);
 * lesson anonymisation;
 * the 4-per-month capacity limit;
+* the hardening regressions in `supabase/tests/20_hardening.sql`: no direct writes, current-stage checks, draft and batch locks, do-not-contact at send time, capacity on direct inserts, and deal signing;
 * the escalation chain;
 * that the activity log is append-only.
 

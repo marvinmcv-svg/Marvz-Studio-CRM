@@ -27,23 +27,26 @@ Errors come back as HTTP 4xx with `{ "message": "...", "code": "..." }`. Read `m
 
 ## Pipeline stages and who may move a lead into them
 
-| Stage | Set by | How |
-|---|---|---|
-| `found` | Hunter | `create_lead` |
-| `screened` / `lost` | Jordan | `screen_lead` |
-| `draft_ready` | Jordan | `create_draft` |
-| `approved` | **Letty only** (Top G may record her decision) | `record_approval` |
-| `sent` | Jordan, only for approved drafts | `log_send` |
-| `replied` | Jordan / Quinn | `log_reply` |
-| `discovery` | Quinn | `add_discovery_note` (auto) or `advance_stage` |
-| `proposal` | Quinn | `create_proposal` |
-| `signed` | Quinn | `sign_deal` |
-| `in_delivery` | Dana | `create_project` |
-| `delivered` | Dana | `complete_project` |
-| `care_plan` | Dana | `start_care_plan` |
-| `lost`, `do_not_contact` | anyone | `advance_stage`, `add_do_not_contact` |
+| Stage | Set by | How | Only from |
+|---|---|---|---|
+| `found` | Hunter | `create_lead` | (new leads) |
+| `screened` / `lost` | Jordan | `screen_lead` | `found` |
+| `draft_ready` | Jordan | `create_draft` | `found`, `screened` |
+| `approved` | **Letty only** (Top G may record her decision) | `record_approval` | `found`, `screened`, `draft_ready` |
+| `sent` | Jordan, only for approved drafts | `log_send` | `approved` |
+| `replied` | Jordan / Quinn | `log_reply` | `sent` |
+| `discovery` | Quinn | `add_discovery_note` (auto) or `advance_stage` | `sent`, `replied` |
+| `proposal` | Quinn | `create_proposal` | `replied`, `discovery` |
+| `signed` | Quinn | `sign_deal` (needs a signed deal) | `discovery`, `proposal` |
+| `in_delivery` | Dana | `create_project` (needs a project) | `signed` |
+| `delivered` | Dana | `complete_project` | `in_delivery` |
+| `care_plan` | Dana | `start_care_plan` | `in_delivery`, `delivered` |
+| `lost` | anyone | `advance_stage` | any stage **before** `signed` |
+| `do_not_contact` | anyone | `add_do_not_contact`, `advance_stage` | any stage |
 
-The database enforces this table (`allowed_target_stages()` and the `guard_lead_stage` trigger), even for direct table edits.
+The database enforces this table (`allowed_target_stages()`, `stage_predecessors()` and the `guard_lead_stage` trigger). Leads never move backwards and `lost` / `do_not_contact` leads cannot be revived, except by Letty or Top G. If a lead needs correcting, call `raise_escalation`.
+
+Workflow functions only move a lead **forward**: a follow-up draft, a late reply or a second project never drags a lead back to an earlier stage. `advance_stage` is strict and returns an error when the move is not allowed from the lead's current stage.
 
 ---
 
@@ -105,10 +108,13 @@ Duplicate matching ignores accents, case, punctuation and phone formatting (`+59
 2. `create_draft(p_lead_id, p_body, p_channel?, p_subject?, p_language?, p_personalisation?)`. Moves the lead to `draft_ready`. Say why the message fits in `p_personalisation`.
 3. `submit_draft_batch(p_draft_ids[], p_note?)` returns `{ "batch_id", "batch_ref" }`. Letty reviews the batch in Grokbot or in the CRM.
 4. **Wait for the decision.** `record_approval` is Letty/Top G only.
-5. `log_send(p_draft_id, p_external_ref?, p_sent_at?)` works **only** for drafts with status `approved` in an approved batch. Anything else is refused. It moves the lead to `sent` and sets a 3-day follow-up.
-6. `log_reply(p_lead_id, p_summary, p_channel?, p_hand_to_quinn = true)` moves the lead to `replied` and makes Quinn the owner.
+5. **Right before sending, re-read the draft** (`GET /rest/v1/outreach_drafts?id=eq.<id>&select=status`) and send only if it is still `approved`. A draft is cancelled (`rejected`, note "Do not contact") if its contact is added to the do-not-contact list after approval.
+6. `log_send(p_draft_id, p_external_ref?, p_sent_at?)` works **only** for drafts with status `approved` in an approved batch, and is refused if the lead is `lost` / `do_not_contact` or the contact matches the do-not-contact list. It moves the lead to `sent` (if it was `approved`) and sets a 3-day follow-up. If a message already went out to someone on the list, call `raise_escalation`.
+7. `log_reply(p_lead_id, p_summary, p_channel?, p_hand_to_quinn = true)` moves a `sent` lead to `replied` and makes Quinn the owner. For a lead that is further along (or `lost`) the reply is logged and the lead stays where it is (`"stage"` and `"message"` in the response say so). Refused for `do_not_contact` leads.
 
-Also: `add_do_not_contact(p_kind, p_value, p_reason, p_lead_id?)`. `p_kind` is one of `business | email | phone | domain | instagram`. It moves the lead to `do_not_contact` and rejects its pending drafts.
+`create_draft` is refused when the lead's business, website, Instagram or any of its contacts is on the do-not-contact list.
+
+Also: `add_do_not_contact(p_kind, p_value, p_reason, p_lead_id?)`. `p_kind` is one of `business | email | phone | domain | instagram`. It moves **every lead that matches the entry** (plus `p_lead_id`, if given) to `do_not_contact` and cancels their unsent drafts. Returns `{ "leads_blocked", "drafts_cancelled" }`.
 
 ---
 
@@ -161,7 +167,7 @@ Same inputs as `quote_deal`. It saves the deal, its line items and the payment m
 Moves the lead to `proposal`. Versions are numbered automatically.
 
 ### `sign_deal(p_deal_id, p_reason?)`
-Moves the lead to `signed`, accepts the proposal and hands the lead to Dana. Returns capacity, with a warning when the month is full.
+Signs a `quoted` or `proposed` deal (a deal can only be signed once; lost deals cannot be signed). Accepts its proposal, marks the lead's **other open quotes as lost** ("Superseded by D-…", returned in `superseded_deal_ids`), moves the lead to `signed` and hands it to Dana. For an upsell on a client that is already in delivery or later, the lead keeps its stage. Returns capacity, with a warning when the month is full.
 
 ---
 
@@ -198,4 +204,4 @@ Moves the lead to `signed`, accepts the proposal and hands the lead to Dana. Ret
 
 Agents may also `GET /rest/v1/<table>?select=*` on any table their role can read (RLS applies). Useful tables: `leads`, `companies`, `contacts`, `outreach_drafts`, `approval_batches`, `deals`, `projects`, `milestones`, `escalations`, `lessons`, and the catalogue (`catalogue_packages`, `catalogue_addons`, `catalogue_care_plans`, `catalogue_package_prices`, `markets`, `catalogue_terms`).
 
-**Write through the RPCs.** They are the only path that guarantees validation and logging. Direct writes are limited to each agent's own tables by RLS, but the stage, draft, lesson and escalation guards still apply.
+**Write through the RPCs.** Direct writes are refused (`permission denied`) on `leads`, `outreach_drafts`, `approval_batches`, `deals`, `deal_items`, `proposals`, `payments`, `projects`, `scopes`, `care_subscriptions`, `care_hours_log` and `do_not_contact`, for every agent including Top G. A few low-risk tables (`companies`, `contacts`, `discovery_notes`, `milestones`, `deliverables`, `lessons`, `testimonials`, `referrals`, `escalations`) still accept direct writes within each agent's role, and the lesson and escalation guards apply there.
