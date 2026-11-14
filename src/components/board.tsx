@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { Camera, Mail, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import type { Tone } from "@/lib/constants";
+import { canMoveStage, type Tone } from "@/lib/constants";
 import type { Channel, Stage } from "@/lib/types";
 import { StageMoveDialog } from "./stage-move";
 import { AgentAvatar, Chip } from "./ui";
@@ -24,21 +24,24 @@ const DOT: Record<Tone, string> = {
   teal: "bg-teal-400", red: "bg-rose-400", accent: "bg-accent",
 };
 
-export function Board({ columns, readOnly }: { columns: BoardColumn[]; readOnly: boolean }) {
+export function Board({ columns, readOnly, agent }: { columns: BoardColumn[]; readOnly: boolean; agent: string }) {
   const [drag, setDrag] = useState<BoardCard | null>(null);
   const [over, setOver] = useState<Stage | null>(null);
   const [move, setMove] = useState<{ card: BoardCard; to: Stage } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const check = (to: Stage) => (drag ? canMoveStage(agent, drag.stage, to) : null);
 
   return (
     <div className="flex h-[calc(100dvh-170px)] min-h-[420px] gap-2.5 overflow-x-auto px-4 py-4 md:px-6">
       {columns.map((col) => (
         <section key={col.key}
-          onDragOver={(e) => { if (drag && drag.stage !== col.key) { e.preventDefault(); setOver(col.key); } }}
+          onDragOver={(e) => { if (drag && check(col.key)?.ok) { e.preventDefault(); setOver(col.key); } }}
           onDragLeave={() => setOver((o) => (o === col.key ? null : o))}
-          onDrop={() => { if (drag && drag.stage !== col.key) setMove({ card: drag, to: col.key }); setDrag(null); setOver(null); }}
-          className={clsx("flex w-[272px] shrink-0 flex-col rounded-xl border bg-panel/60 transition-colors",
-            over === col.key ? "border-accent/60 bg-accent/[0.04]" : "border-line")}>
+          onDrop={() => { if (drag && check(col.key)?.ok) setMove({ card: drag, to: col.key }); setDrag(null); setOver(null); }}
+          title={drag && drag.stage !== col.key && !check(col.key)?.ok ? (check(col.key) as { reason: string }).reason : undefined}
+          className={clsx("flex w-[272px] shrink-0 flex-col rounded-xl border bg-panel/60 transition-[colors,opacity]",
+            over === col.key ? "border-accent/60 bg-accent/[0.04]" : "border-line",
+            drag && drag.stage !== col.key && !check(col.key)?.ok && "opacity-40")}>
           <header className="flex items-center gap-2 px-3 py-2.5">
             <span className={clsx("size-2 rounded-full", DOT[col.tone])} />
             <span className="font-medium">{col.label}</span>

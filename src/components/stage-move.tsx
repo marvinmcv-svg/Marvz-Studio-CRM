@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { advanceStage } from "@/app/actions";
-import { ALL_STAGES, stageMeta } from "@/lib/constants";
+import { ALL_STAGES, canMoveStage, stageMeta } from "@/lib/constants";
 import type { Stage } from "@/lib/types";
 
 /** Modal asking for the mandatory reason before a stage change. */
@@ -19,7 +19,7 @@ export function StageMoveDialog({ leadName, from, to, onClose, leadId, onDone }:
     onClose();
   });
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-3" onClick={onClose}>
+    <div data-modal-open className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 px-3" onClick={onClose}>
       <div className="card w-full max-w-[440px] p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="font-semibold">Move {leadName}</div>
         <div className="mt-1 text-[12px] text-ink-3">{stageMeta(from).label} → <span className="text-ink">{stageMeta(to).label}</span> · logged with your name, time and reason</div>
@@ -37,12 +37,20 @@ export function StageMoveDialog({ leadName, from, to, onClose, leadId, onDone }:
   );
 }
 
-export function StageSelect({ leadId, leadName, stage }: { leadId: string; leadName: string; stage: Stage }) {
+export function StageSelect({ leadId, leadName, stage, agent }: { leadId: string; leadName: string; stage: Stage; agent: string }) {
   const [to, setTo] = useState<Stage | null>(null);
   return (
     <>
       <select value={stage} onChange={(e) => setTo(e.target.value as Stage)} className="input w-auto" aria-label="Move to stage">
-        {ALL_STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+        {ALL_STAGES.map((s) => {
+          const check = s.key === stage ? null : canMoveStage(agent, stage, s.key);
+          const blocked = check && !check.ok;
+          return (
+            <option key={s.key} value={s.key} disabled={!!blocked}>
+              {s.label}{blocked ? ` — ${check.reason}` : ""}
+            </option>
+          );
+        })}
       </select>
       {to && to !== stage && <StageMoveDialog leadId={leadId} leadName={leadName} from={stage} to={to} onClose={() => setTo(null)} />}
     </>

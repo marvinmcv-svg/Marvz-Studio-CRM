@@ -4,13 +4,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActivityFeed } from "@/components/activity-feed";
 import { Chip, PageHeader, StatusChip } from "@/components/ui";
-import { getTables } from "@/lib/data";
+import { getLeadHistory, getTables } from "@/lib/data";
 import { daysBetween, money, monthLabel, shortDate, usd } from "@/lib/format";
 import { isSlipping } from "@/lib/metrics";
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const t = await getTables("projects", "milestones", "deliverables", "payments", "scopes", "companies", "activity_log", "agents", "deals", "testimonials");
+  const t = await getTables("projects", "milestones", "deliverables", "payments", "scopes", "companies", "agents", "deals", "testimonials");
   const p = t.projects.find((x) => x.id === id);
   if (!p) notFound();
   const company = t.companies.find((c) => c.id === p.company_id);
@@ -20,7 +20,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   const pays = t.payments.filter((x) => x.deal_id === p.deal_id).sort((a, b) => PAY_ORDER.indexOf(a.label) - PAY_ORDER.indexOf(b.label));
   const scope = t.scopes.filter((s) => s.deal_id === p.deal_id).sort((a, b) => b.version - a.version)[0];
   const deal = t.deals.find((d) => d.id === p.deal_id);
-  const activity = t.activity_log.filter((a) => a.lead_id === p.lead_id && a.entity_type && ["project", "milestone", "deliverable", "payment", "scope", "testimonial", "care_subscription", "referral"].includes(a.entity_type));
+  const activity = (p.lead_id ? (await getLeadHistory(p.lead_id)).activity_log : []).filter((a) => a.entity_type && ["project", "milestone", "deliverable", "payment", "scope", "testimonial", "care_subscription", "referral"].includes(a.entity_type));
   const testimonial = t.testimonials.find((x) => x.project_id === id);
 
   return (

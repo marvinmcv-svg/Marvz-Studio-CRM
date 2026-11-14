@@ -5,7 +5,7 @@ import { ActivityFeed } from "@/components/activity-feed";
 import { StageSelect } from "@/components/stage-move";
 import { AgentAvatar, Chip, Empty, Field, StageChip, StatusChip, Tabs } from "@/components/ui";
 import { stageMeta } from "@/lib/constants";
-import { getMe, getTables } from "@/lib/data";
+import { getLeadHistory, getMe, getTables } from "@/lib/data";
 import { dateTime, money, relTime, shortDate, titleCase } from "@/lib/format";
 
 export default async function LeadPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
@@ -13,7 +13,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const { tab = "activity" } = await searchParams;
   const me = await getMe();
   const t = await getTables(
-    "leads", "companies", "contacts", "agents", "activity_log", "stage_changes", "outreach_drafts", "discovery_notes",
+    "leads", "companies", "contacts", "agents", "outreach_drafts", "discovery_notes",
     "deals", "deal_items", "proposals", "projects", "escalations", "catalogue_packages", "catalogue_addons", "approval_batches",
   );
   const lead = t.leads.find((l) => l.id === id);
@@ -23,8 +23,9 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const agent = new Map(t.agents.map((a) => [a.code, a]));
   const serviceName = new Map<string, string>([...t.catalogue_packages.map((p) => [p.code, p.name] as [string, string]), ...t.catalogue_addons.map((a) => [a.code, a.name] as [string, string])]);
 
-  const activity = t.activity_log.filter((a) => a.lead_id === id);
-  const history = t.stage_changes.filter((s) => s.lead_id === id).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  const h = await getLeadHistory(id);
+  const activity = h.activity_log;
+  const history = [...h.stage_changes].sort((a, b) => a.created_at.localeCompare(b.created_at));
   const drafts = t.outreach_drafts.filter((d) => d.lead_id === id);
   const notes = t.discovery_notes.filter((n) => n.lead_id === id).sort((a, b) => a.created_at.localeCompare(b.created_at));
   const deals = t.deals.filter((d) => d.lead_id === id);
@@ -65,7 +66,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           </div>
           {!me?.demo && (
             <div className="mt-3 flex items-center gap-2">
-              <StageSelect leadId={lead.id} leadName={company.name} stage={lead.stage} />
+              <StageSelect leadId={lead.id} leadName={company.name} stage={lead.stage} agent={me?.code ?? ""} />
               <Link href={`/deals/new?lead=${lead.id}`} className="btn"><Calculator size={14} /> Quote</Link>
             </div>
           )}

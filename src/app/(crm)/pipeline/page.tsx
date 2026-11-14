@@ -89,7 +89,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
       <Suspense><PipelineFilters options={options} /></Suspense>
 
       {view === "board" ? (
-        <Board columns={columns} readOnly={!!me?.demo} />
+        <Board columns={columns} readOnly={!!me?.demo} agent={me?.code ?? ""} />
       ) : leads.length === 0 ? (
         <Empty title="No leads match these filters" />
       ) : (

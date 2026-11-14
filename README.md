@@ -170,8 +170,15 @@ The full per-agent reference, with every function, argument and example payload,
 ```bash
 npm run test:db     # throwaway Postgres 16: migrations + seed + permission tests
 npm run lint        # TypeScript
+npm test            # unit tests: quote engine, metrics, UI stage rules vs. the SQL
 npm run build
+SQUAD_ALLOW_DEMO=1 npx next start -p 3100 &
+npm run test:smoke -- http://localhost:3100    # every page renders, security headers present
 ```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs all of these on every pull request and on pushes to `main`. Set `SMOKE_BROWSER=1` to also open each page in Chromium (needs Playwright) and fail on console errors or CSP violations.
+
+The unit tests check that the Deal Builder's live quote gives the same numbers as `quote_deal()`, and that the stage rules the UI uses to hide moves match `stage_predecessors()` and `allowed_target_stages()` in the migrations, so the two can't drift apart.
 
 `test:db` loads Supabase-compatible auth stubs and applies every migration. It then runs `seed.sql`, which drives the entire pipeline through the agent RPCs, so it doubles as an end-to-end test. Finally, `supabase/tests/10_permissions.sql` logs in as each agent and checks:
 
@@ -199,7 +206,8 @@ supabase/tests/        Supabase stubs + permission/business-rule tests
 src/app/(crm)/         pages (overview, pipeline, leads, approvals, escalations, …)
 src/app/actions.ts     server actions: UI writes go through the same RPCs as the agents
 src/lib/               data access (live or demo), quote engine, metrics, types
-scripts/               setup-agents.mjs, test-db.sh, export-demo.sh
+scripts/               setup-agents.mjs, test-db.sh, export-demo.sh, smoke.mjs
+.github/workflows/     CI: typecheck, unit tests, build, smoke test, database tests
 docs/AGENT_API.md      per-agent RPC reference
 ```
 
@@ -212,4 +220,7 @@ Before building the UI I researched reference screens on Mobbin and saved them t
 * **Density (Linear):** 13px base text, 32px rows, small status chips with a coloured dot (status colours carry meaning; violet is the single brand accent), and tabular numbers.
 * **Dashboards (Plausible, Stripe):** a KPI tile row first, then "needs attention" before charts, single-series bars with hover values and no chart junk.
 * **Empty states:** one line saying what will appear and which agent or RPC fills it.
+* **Data loading:** every table is read completely in 1,000-row pages (Supabase's per-request limit), once per request, shared by the layout and the page. Lead and project pages load their full history directly; other pages show the most recent 2,000 activity entries.
+* **Live refresh:** agent activity refreshes open pages at most every 10 seconds, waits until bursts settle, skips hidden tabs (catching up when they're shown) and never refreshes while you're typing or have a dialog open.
+* **Stage moves in the UI** only offer moves the database would accept for your role; the others are shown disabled with the reason, and the board dims columns you can't drop into.
 * **Mobile:** sidebar becomes a drawer, a bottom tab bar holds the five core views, and tables scroll horizontally.

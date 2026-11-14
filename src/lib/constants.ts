@@ -36,4 +36,47 @@ export const ALLOWED_TARGETS: Record<string, Stage[] | "all"> = {
   dana: ["signed", "in_delivery", "delivered", "care_plan", "lost", "do_not_contact"],
 };
 
+/**
+ * Stages a lead may come FROM for each target (mirrors public.stage_predecessors,
+ * migration 20261114000005). The database is the authority; this only lets the
+ * UI hide moves that would be refused. A unit test keeps the two in sync.
+ */
+export const STAGE_PREDECESSORS: Record<Stage, Stage[]> = {
+  found: [],
+  screened: ["found"],
+  draft_ready: ["found", "screened"],
+  approved: ["found", "screened", "draft_ready"],
+  sent: ["approved"],
+  replied: ["sent"],
+  discovery: ["sent", "replied"],
+  proposal: ["replied", "discovery"],
+  signed: ["discovery", "proposal"],
+  in_delivery: ["signed"],
+  delivered: ["in_delivery"],
+  care_plan: ["in_delivery", "delivered"],
+  lost: ["found", "screened", "draft_ready", "approved", "sent", "replied", "discovery", "proposal"],
+  do_not_contact: ["found", "screened", "draft_ready", "approved", "sent", "replied", "discovery", "proposal",
+    "signed", "in_delivery", "delivered", "care_plan", "lost"],
+};
+
+/** Which function should make this move instead of a manual stage change. */
+const VIA_RPC: Partial<Record<Stage, string>> = {
+  approved: "Letty approves drafts on the Approvals page",
+  sent: "Jordan logs the send with log_send",
+  signed: "Quinn signs the deal with sign_deal",
+  in_delivery: "Dana starts the project with create_project",
+};
+
+/** Can `agent` move a lead from `from` to `to`? Returns the reason when not. */
+export function canMoveStage(agent: string, from: Stage, to: Stage): { ok: true } | { ok: false; reason: string } {
+  if (from === to) return { ok: false, reason: "Current stage" };
+  const targets = ALLOWED_TARGETS[agent];
+  if (!targets) return { ok: false, reason: "Not a squad member" };
+  if (targets === "all") return { ok: true };
+  if (!targets.includes(to)) return { ok: false, reason: "Not your stage" };
+  if (!STAGE_PREDECESSORS[to].includes(from)) return { ok: false, reason: `Not from ${stageMeta(from).label}` };
+  if (VIA_RPC[to]) return { ok: false, reason: VIA_RPC[to]! };
+  return { ok: true };
+}
+
 export const OPEN_DEAL_STATUSES = ["draft", "quoted", "proposed"] as const;
