@@ -43,7 +43,9 @@ Keyboard: `⌘K` or `/` opens search, `n` creates a new lead, `b` opens the deal
   * Lessons are rejected if they mention a client or contact name, an email, a phone number, a URL or an @handle.
   * Only admins can resolve escalations.
 * `activity_log` and `stage_changes` are **append-only**. Agents have no insert, update or delete rights on them; only the security-definer RPCs write there.
-* The anon role has no table access.
+* The anon role has no table access and can call no function.
+* **Functions are private by default.** A function added by a future migration can't be called by anyone until that migration runs `grant execute on function public.<name>(…) to authenticated;`. Only grant API functions; keep helpers private.
+* Approvals record who actually decided: Letty, or Top G recording on her behalf (shown as "Top G for Letty").
 
 The SQL test suite checks all of this; see [Tests](#tests).
 
@@ -58,6 +60,8 @@ npm run dev        # http://localhost:3000
 
 Without Supabase keys the app runs in **demo mode**. It shows realistic sample data exported from the seeded database, with timestamps shifted so it always looks current. In demo mode changes are disabled.
 
+Demo mode has no sign-in, so a **production** build (`next start`, Vercel) refuses to run it and answers every request with a 503 "not configured" message. That stops a deploy with missing Supabase settings from quietly becoming a public site. To serve the demo publicly on purpose, set `SQUAD_ALLOW_DEMO=1`.
+
 ## 2. Create the Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com).
@@ -66,7 +70,7 @@ Without Supabase keys the app runs in **demo mode**. It shows realistic sample d
    npx supabase link --project-ref <ref>
    npx supabase db push
    ```
-   or by pasting the five files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue; the fifth adds the hardening rules.
+   or by pasting the six files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue; the fifth and sixth add the hardening rules.
 3. Optional demo data: run `supabase/seed.sql` in the SQL editor. Remove it before going live with `supabase/demo_cleanup.sql`, which keeps the team and catalogue.
 4. Check **Database → Publications → supabase_realtime** includes `activity_log`. The migration adds it, which drives live refresh.
 5. **Turn off public sign-ups** (Authentication → Sign In / Providers → *Allow new users to sign up* = off). Strangers who sign up still can't see anything (every policy and RPC requires a squad member, and the tests cover this), but there is no reason to allow it.
@@ -112,7 +116,15 @@ Each agent connects with **its own identity**, so RLS knows who is calling and e
 | `apikey` header | the project's **anon** key |
 | `Authorization` header | `Bearer <that agent's api_token from setup-agents>` |
 
-Tokens expire after `--days` (default 365). To rotate one, re-run `npm run setup-agents -- --only hunter`.
+Tokens expire after `--days` (default 365). Re-running the script mints a fresh token but does **not** invalidate the old one. If a token or password may have leaked:
+
+```bash
+npm run setup-agents -- --revoke hunter     # immediately: every token and session of Hunter is refused
+npm run setup-agents -- --rotate hunter     # new auth user, so all old tokens and the old password are dead; prints new ones
+npm run setup-agents -- --activate hunter   # switch Hunter back on once the new credentials are in Grokbot
+```
+
+`--revoke` sets `agents.active = false`, which every policy and RPC checks. It needs only the service role key. `--revoke letty` is refused so the owner can't lock herself out.
 
 **Option B: email and password.** Use this for projects on the new asymmetric signing keys. The agent signs in once per session:
 
@@ -171,6 +183,7 @@ npm run build
 * quote arithmetic (US and MX);
 * lesson anonymisation;
 * the 4-per-month capacity limit;
+* who recorded each approval, MRR visibility, function privileges and the agent kill switch (`supabase/tests/30_audit_medium.sql`);
 * the hardening regressions in `supabase/tests/20_hardening.sql`: no direct writes, current-stage checks, draft and batch locks, do-not-contact at send time, capacity on direct inserts, and deal signing;
 * the escalation chain;
 * that the activity log is append-only.

@@ -1,6 +1,6 @@
 import { cache } from "react";
 import demo from "./demo/data.json";
-import { isLive } from "./supabase/env";
+import { demoAllowed, isLive, NOT_CONFIGURED } from "./supabase/env";
 import { supabaseServer } from "./supabase/server";
 import type { AgentCode, TableName, Tables } from "./types";
 
@@ -40,6 +40,7 @@ const ORDER: Partial<Record<TableName, string>> = {
 
 export async function getTables<K extends TableName>(...names: K[]): Promise<Pick<Tables, K>> {
   if (!isLive) {
+    if (!demoAllowed()) throw new Error(NOT_CONFIGURED);
     const all = demoTables();
     const out = {} as Pick<Tables, K>;
     for (const n of names) {
@@ -66,7 +67,10 @@ export async function getTables<K extends TableName>(...names: K[]): Promise<Pic
 export type Me = { code: AgentCode; name: string; email: string | null; demo: boolean };
 
 export const getMe = cache(async (): Promise<Me | null> => {
-  if (!isLive) return { code: "letty", name: "Letty", email: null, demo: true };
+  if (!isLive) {
+    if (!demoAllowed()) throw new Error(NOT_CONFIGURED);
+    return { code: "letty", name: "Letty", email: null, demo: true };
+  }
   const sb = await supabaseServer();
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return null;

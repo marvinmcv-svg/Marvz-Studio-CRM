@@ -11,6 +11,13 @@
  *   [LETTY_EMAIL=letty@yourmail.com]   # Letty's real login email
  *   node scripts/setup-agents.mjs [--only hunter,jordan] [--days 365]
  *
+ * Kill switches (no JWT secret needed):
+ *   --revoke hunter     deactivate the agent: every token and session it holds
+ *                       stops working immediately (RLS requires agents.active)
+ *   --activate hunter   undo --revoke (its old tokens work again unless rotated)
+ *   --rotate hunter     delete and recreate the agent's auth user, so every old
+ *                       token and password is dead for good; prints new ones
+ *
  * Safe to re-run: existing users are reused, passwords are only set for new users.
  * Output goes to stdout ONLY — store it in your password manager / Grokbot secrets.
  */
@@ -22,7 +29,16 @@ const SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const JWT_SECRET = process.env.SUPABASE_JWT_SECRET;
 const DOMAIN = process.env.SQUAD_EMAIL_DOMAIN ?? "squad.local";
 const args = process.argv.slice(2);
-const only = args.includes("--only") ? args[args.indexOf("--only") + 1].split(",") : null;
+const codes = (flag) => {
+  if (!args.includes(flag)) return null;
+  const v = args[args.indexOf(flag) + 1];
+  if (!v || v.startsWith("--")) { console.error(`${flag} needs a comma-separated list of agent codes`); process.exit(1); }
+  return v.split(",").map((x) => x.trim()).filter(Boolean);
+};
+const revoke = codes("--revoke");
+const activate = codes("--activate");
+const rotate = codes("--rotate");
+const only = codes("--only") ?? rotate;
 const days = args.includes("--days") ? Number(args[args.indexOf("--days") + 1]) : 365;
 
 if (!URL_ || !SERVICE) {
@@ -39,8 +55,26 @@ function signJwt(payload, secret) {
   return `${head}.${body}.${sig}`;
 }
 
-const { data: agents, error } = await admin.from("agents").select("code,name,auth_user_id").order("code");
+const { data: agents, error } = await admin.from("agents").select("code,name,auth_user_id,active").order("code");
 if (error) { console.error("Could not read agents (did you run the migrations?):", error.message); process.exit(1); }
+
+const unknown = [...(revoke ?? []), ...(activate ?? []), ...(rotate ?? [])].filter((c) => !agents.some((a) => a.code === c));
+if (unknown.length) { console.error(`Unknown agent code(s): ${unknown.join(", ")}`); process.exit(1); }
+
+if (revoke || activate) {
+  if (revoke?.includes("letty")) {
+    console.error("Refusing to deactivate letty: that would lock the owner out of the CRM. Do it in the SQL editor if you really mean it.");
+    process.exit(1);
+  }
+  for (const [targets, active] of [[revoke, false], [activate, true]]) {
+    if (!targets) continue;
+    const { error: e } = await admin.from("agents").update({ active }).in("code", targets);
+    if (e) { console.error(`✗ ${e.message}`); process.exit(1); }
+    console.error(`✓ ${active ? "re-activated" : "revoked"}: ${targets.join(", ")}`
+      + (active ? "" : " (all their tokens and sessions are refused from now on; use --rotate to issue new credentials)"));
+  }
+  process.exit(0);
+}
 
 const { data: list } = await admin.auth.admin.listUsers({ perPage: 1000 });
 const users = list?.users ?? [];
@@ -50,6 +84,13 @@ for (const a of agents) {
   if (only && !only.includes(a.code)) continue;
   const email = a.code === "letty" && process.env.LETTY_EMAIL ? process.env.LETTY_EMAIL : `${a.code.replace("_", "-")}@${DOMAIN}`;
   let user = users.find((u) => u.id === a.auth_user_id) ?? users.find((u) => u.email === email);
+  if (user && rotate?.includes(a.code)) {
+    // A new auth user id means every token signed for the old one no longer matches agents.auth_user_id.
+    const { error: e } = await admin.auth.admin.deleteUser(user.id);
+    if (e) { console.error(`✗ rotate ${a.code}: ${e.message}`); continue; }
+    console.error(`↻ ${a.code}: old auth user deleted; all its tokens and sessions are now invalid`);
+    user = undefined;
+  }
   let password = null;
   if (!user) {
     password = randomBytes(18).toString("base64url");

@@ -1,12 +1,17 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { demoAllowed, NOT_CONFIGURED } from "@/lib/supabase/env";
 
 const URL_ = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 /** Refreshes the Supabase session cookie and sends signed-out users to /login. */
 export async function proxy(request: NextRequest) {
-  if (!URL_ || !KEY) return NextResponse.next(); // demo mode
+  if (!URL_ || !KEY) {
+    // demo mode: fine locally, refused in production unless explicitly allowed
+    if (demoAllowed()) return NextResponse.next();
+    return new NextResponse(NOT_CONFIGURED, { status: 503, headers: { "content-type": "text/plain; charset=utf-8" } });
+  }
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(URL_, KEY, {

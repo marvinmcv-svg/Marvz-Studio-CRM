@@ -4,6 +4,7 @@ import { BatchReview } from "@/components/batch-review";
 import { AgentAvatar, Chip, Empty, PageHeader, StatusChip } from "@/components/ui";
 import { getMe, getTables } from "@/lib/data";
 import { dateTime, relTime } from "@/lib/format";
+import type { AgentCode } from "@/lib/types";
 
 export const metadata = { title: "Approvals" };
 
@@ -43,7 +44,12 @@ export default async function ApprovalsPage() {
                   <span className="text-[12px] text-ink-3">{drafts.length} drafts · submitted {relTime(b.submitted_at)} by</span>
                   <AgentAvatar agent={agent.get(b.submitted_by)} withName />
                 </div>
-                {b.decided_at && <span className="text-[12px] text-ink-3">decided {dateTime(b.decided_at)}</span>}
+                {b.decided_at && (
+                  <span className="flex items-center gap-1.5 text-[12px] text-ink-3">
+                    decided {dateTime(b.decided_at)}
+                    {b.decided_by && <>by <AgentAvatar agent={agent.get(b.decided_by as AgentCode)} withName />{b.decided_by === "top_g" && " for Letty"}</>}
+                  </span>
+                )}
               </div>
               {b.note && <div className="border-b border-line px-4 py-2 text-[12px] text-ink-2">“{b.note}”</div>}
               {b.status === "pending" ? (

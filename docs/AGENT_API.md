@@ -124,6 +124,7 @@ Also: `add_do_not_contact(p_kind, p_value, p_reason, p_lead_id?)`. `p_kind` is o
 * Leave out `p_approved_ids` to approve the whole batch.
 * `p_feedback` takes per-draft notes: `{ "<draft_id>": "Shorter, mention the bakery photos" }`.
 * Approved drafts move their leads to `approved`. The batch becomes `approved`, `partially_approved` or `rejected`.
+* The caller is recorded as the decider (`decided_by`, `approved_by`): `letty`, or `top_g` when Top G records Letty's decision. The response includes `decided_by`.
 
 ### `update_escalation(p_escalation_id, p_action, p_notes?)`
 `p_action` is one of:
@@ -133,7 +134,7 @@ Also: `add_do_not_contact(p_kind, p_value, p_reason, p_lead_id?)`. `p_kind` is o
 * `dismiss`
 
 ### `dashboard_metrics()`
-One call returns: MRR, committed MRR, pipeline value, win rate, average deal, counts per stage, open escalations, batches and drafts waiting for Letty, slipping milestones, capacity, and renewals due in the next 30 days.
+One call returns: MRR, committed MRR, pipeline value, win rate, average deal, counts per stage, open escalations, batches and drafts waiting for Letty, slipping milestones, capacity, and renewals due in the next 30 days. `mrr_usd` and `committed_mrr_usd` are only filled in for Letty, Top G and Dana (the agents who can read care plans); for everyone else they are `null`.
 
 ---
 
