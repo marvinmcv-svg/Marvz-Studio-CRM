@@ -1,5 +1,6 @@
 import { Users } from "lucide-react";
 import { AgentAvatar, Chip, PageHeader } from "@/components/ui";
+import { OWNERS } from "@/lib/types";
 import { AGENT_RPCS, SHARED_RPCS } from "@/lib/agent-api";
 import { getTables } from "@/lib/data";
 import { relTime } from "@/lib/format";
@@ -21,7 +22,7 @@ export default async function TeamPage() {
               <div className="flex items-start gap-3 p-4">
                 <AgentAvatar agent={a} size={36} />
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2"><span className="font-semibold">{a.name}</span><Chip tone={a.kind === "human" ? "amber" : "accent"}>{a.kind === "human" ? "Human · owner" : "AI agent"}</Chip></div>
+                  <div className="flex items-center gap-2"><span className="font-semibold">{a.name}</span><Chip tone={!a.active ? "slate" : OWNERS.includes(a.code) ? "amber" : "accent"}>{!a.active ? "Inactive" : OWNERS.includes(a.code) ? "Human · owner" : a.kind === "human" ? "Human" : "AI agent"}</Chip></div>
                   <div className="text-[12px] text-ink-3">{a.title} · <code>{a.code}</code></div>
                   <p className="mt-1.5 text-ink-2">{a.description}</p>
                 </div>

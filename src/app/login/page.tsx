@@ -29,7 +29,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <div className="font-semibold">This account has no access to Squad CRM</div>
           <p className="mt-2 text-[13px] text-ink-2">
             You are signed in, but your account is not linked to an active squad member, or its access was revoked.
-            Ask Letty to link it (<code className="text-ink">npm run setup-agents</code>, see README), then sign in again.
+            Ask Marvin to link it (<code className="text-ink">npm run setup-agents</code>, see README), then sign in again.
           </p>
           <form action="/auth/signout" method="post" className="mt-5">
             <button className="btn-primary w-full justify-center">Sign out and use another account</button>

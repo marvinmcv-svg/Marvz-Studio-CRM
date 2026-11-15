@@ -38,7 +38,7 @@ export function StageDot({ stage }: { stage: Stage }) {
 }
 
 const STATUS_TONE: Record<string, Tone> = {
-  open: "amber", in_review: "violet", with_letty: "red", resolved: "green", dismissed: "slate",
+  open: "amber", in_review: "violet", with_owner: "red", with_letty: "red", resolved: "green", dismissed: "slate",
   pending: "amber", approved: "green", partially_approved: "amber", rejected: "red",
   ready: "blue", in_batch: "amber", sent: "green", draft: "slate",
   quoted: "blue", proposed: "amber", signed: "green", lost: "red",

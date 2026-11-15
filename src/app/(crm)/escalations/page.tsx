@@ -22,20 +22,21 @@ export default async function EscalationsPage({ searchParams }: { searchParams: 
   const canAct = !me?.demo && ADMINS.includes(me?.code ?? "");
 
   const groups: Record<string, Escalation[]> = {
-    letty: t.escalations.filter((e) => e.status === "with_letty"),
+    owner: t.escalations.filter((e) => e.status === "with_owner" || e.status === "with_letty"),
     open: t.escalations.filter((e) => e.status === "open" || e.status === "in_review"),
     closed: t.escalations.filter((e) => e.status === "resolved" || e.status === "dismissed"),
   };
-  const list = (tab === "closed" ? groups.closed : tab === "letty" ? groups.letty : [...groups.letty, ...groups.open])
+  const ownerTab = tab === "owner" || tab === "letty";
+  const list = (tab === "closed" ? groups.closed : ownerTab ? groups.owner : [...groups.owner, ...groups.open])
     .sort((a, b) => SEV[a.severity] - SEV[b.severity] || b.created_at.localeCompare(a.created_at));
 
   return (
     <div>
       <PageHeader title="Escalations" icon={<AlertTriangle size={18} className="text-ink-3" />}
-        subtitle="Agent → Top G → Letty. Top G double-checks and only passes to Letty what he can't solve." />
-      <Tabs active={tab} tabs={[
-        { key: "open", label: "Open", href: "/escalations?tab=open", count: groups.open.length + groups.letty.length },
-        { key: "letty", label: "Waiting on Letty", href: "/escalations?tab=letty", count: groups.letty.length },
+        subtitle="Agent → Top G → Marvin. Top G double-checks and only passes to Marvin what he can't solve." />
+      <Tabs active={ownerTab ? "owner" : tab} tabs={[
+        { key: "open", label: "Open", href: "/escalations?tab=open", count: groups.open.length + groups.owner.length },
+        { key: "owner", label: "Waiting on Marvin", href: "/escalations?tab=owner", count: groups.owner.length },
         { key: "closed", label: "Resolved", href: "/escalations?tab=closed", count: groups.closed.length },
       ]} />
       <div className="grid gap-3 p-4 md:p-6">
@@ -57,7 +58,7 @@ export default async function EscalationsPage({ searchParams }: { searchParams: 
                 <AgentAvatar agent={agent.get(e.raised_by)} withName />
                 <ArrowRight size={12} />
                 <AgentAvatar agent={agent.get("top_g")} withName />
-                {(e.status === "with_letty" || e.resolved_by === "letty") && <><ArrowRight size={12} /><AgentAvatar agent={agent.get("letty")} withName /></>}
+                {(e.status === "with_owner" || e.status === "with_letty" || e.resolved_by === "marvin") && <><ArrowRight size={12} /><AgentAvatar agent={agent.get("marvin")} withName /></>}
                 {l && <> · <Link href={`/leads/${l.id}`} className="text-ink-2 hover:text-accent-2">{company.get(l.company_id)?.name}</Link></>}
                 {p && <> · <Link href={`/projects/${p.id}`} className="text-ink-2 hover:text-accent-2">P-{p.ref}</Link></>}
               </div>

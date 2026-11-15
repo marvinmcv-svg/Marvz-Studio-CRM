@@ -22,7 +22,7 @@ export default async function OverviewPage() {
   const ds = dealStats(t.deals);
   const cap = capacity(t.projects, capacityLimit(t.catalogue_terms));
   const escalations = openEscalations(t.escalations).sort((a, b) =>
-    (a.status === "with_letty" ? 0 : 1) - (b.status === "with_letty" ? 0 : 1) || b.created_at.localeCompare(a.created_at));
+    (a.status === "with_owner" || a.status === "with_letty" ? 0 : 1) - (b.status === "with_owner" || b.status === "with_letty" ? 0 : 1) || b.created_at.localeCompare(a.created_at));
   const pendingBatches = t.approval_batches.filter((b) => b.status === "pending");
   const slipping = t.milestones.filter(isSlipping);
   const projectBy = new Map(t.projects.map((p) => [p.id, p]));
@@ -80,11 +80,11 @@ export default async function OverviewPage() {
               {escalations.map((e) => (
                 <li key={e.id}>
                   <Link href="/escalations" className="flex items-start gap-3 px-4 py-3 hover:bg-panel-2/50">
-                    <AlertTriangle size={15} className={e.status === "with_letty" ? "mt-0.5 text-rose-300" : "mt-0.5 text-amber-300"} />
+                    <AlertTriangle size={15} className={e.status === "with_owner" || e.status === "with_letty" ? "mt-0.5 text-rose-300" : "mt-0.5 text-amber-300"} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="font-medium">{e.title}</span>
-                        {e.status === "with_letty" ? <Chip tone="red" dot>for Letty</Chip> : <StatusChip status={e.status} />}
+                        {e.status === "with_owner" || e.status === "with_letty" ? <Chip tone="red" dot>for Marvin</Chip> : <StatusChip status={e.status} />}
                         <StatusChip status={e.severity} />
                       </div>
                       <div className="mt-0.5 truncate text-[12px] text-ink-3">
@@ -103,7 +103,7 @@ export default async function OverviewPage() {
                     <Link href="/approvals" className="flex items-start gap-3 px-4 py-3 hover:bg-panel-2/50">
                       <CheckCheck size={15} className="mt-0.5 text-amber-300" />
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2"><span className="font-medium">Outreach batch #{b.ref} awaits Letty</span><Chip tone="amber">{n} drafts</Chip></div>
+                        <div className="flex items-center gap-2"><span className="font-medium">Outreach batch #{b.ref} awaits Marvin</span><Chip tone="amber">{n} drafts</Chip></div>
                         <div className="mt-0.5 truncate text-[12px] text-ink-3">Submitted by Jordan {relTime(b.submitted_at)}{b.note && ` · ${b.note}`}</div>
                       </div>
                       <ArrowRight size={14} className="mt-1 text-ink-3" />
@@ -138,7 +138,7 @@ export default async function OverviewPage() {
                 </li>
               ))}
               {escalations.length + pendingBatches.length + slipping.length + renewals.length === 0 && (
-                <Empty title="All clear">Nothing needs Top G or Letty right now.</Empty>
+                <Empty title="All clear">Nothing needs Top G or Marvin right now.</Empty>
               )}
             </ul>
           </section>

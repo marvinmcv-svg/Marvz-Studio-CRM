@@ -156,7 +156,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
                       {d.subject && <div className="mb-1 font-medium">{d.subject}</div>}
                       <p className="whitespace-pre-wrap text-ink-2">{d.body}</p>
                       {d.personalisation && <p className="mt-2 text-[12px] text-ink-3">Why it fits: {d.personalisation}</p>}
-                      {d.reviewer_note && <p className="mt-2 rounded-lg bg-panel-3 px-3 py-2 text-[12px] text-ink-2">Letty: {d.reviewer_note}</p>}
+                      {d.reviewer_note && <p className="mt-2 rounded-lg bg-panel-3 px-3 py-2 text-[12px] text-ink-2">Reviewer: {d.reviewer_note}</p>}
                     </div>
                   </article>
                 );

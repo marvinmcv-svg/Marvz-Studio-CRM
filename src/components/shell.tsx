@@ -16,7 +16,7 @@ export function Shell({
   children, badges, leads, me, demo,
 }: {
   children: ReactNode;
-  badges: { approvals: number; escalations: number; lettyEscalations: number; slipping: number };
+  badges: { approvals: number; escalations: number; ownerEscalations: number; slipping: number };
   leads: LeadIndex[];
   me: { name: string; code: string; color: string };
   demo: boolean;
@@ -33,7 +33,7 @@ export function Shell({
         { href: "/", label: "Overview", icon: <Gauge size={15} />, key: "o" },
         { href: "/pipeline", label: "Pipeline", icon: <Kanban size={15} />, key: "p" },
         { href: "/approvals", label: "Approvals", icon: <CheckCheck size={15} />, key: "a", badge: badges.approvals, badgeTone: "warn" },
-        { href: "/escalations", label: "Escalations", icon: <AlertTriangle size={15} />, key: "e", badge: badges.escalations, badgeTone: badges.lettyEscalations ? "bad" : "warn" },
+        { href: "/escalations", label: "Escalations", icon: <AlertTriangle size={15} />, key: "e", badge: badges.escalations, badgeTone: badges.ownerEscalations ? "bad" : "warn" },
         { href: "/activity", label: "Activity log", icon: <Activity size={15} />, key: "l" },
       ],
     },
@@ -132,7 +132,7 @@ export function Shell({
         </span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px]">{me.name}</div>
-          <div className="truncate text-[11px] text-ink-3">{demo ? "Demo mode · read-only" : me.code === "letty" ? "Owner" : me.code === "marvin" ? "Admin" : me.code}</div>
+          <div className="truncate text-[11px] text-ink-3">{demo ? "Demo mode · read-only" : me.code === "marvin" ? "Owner" : me.code === "top_g" ? "Coordinator" : me.code}</div>
         </div>
         {!demo && (
           <form action="/auth/signout" method="post">

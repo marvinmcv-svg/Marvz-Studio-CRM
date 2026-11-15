@@ -4,7 +4,7 @@ import { BatchReview } from "@/components/batch-review";
 import { AgentAvatar, Chip, Empty, PageHeader, StatusChip } from "@/components/ui";
 import { getMe, getTables } from "@/lib/data";
 import { dateTime, relTime } from "@/lib/format";
-import { ADMINS, type AgentCode } from "@/lib/types";
+import { OWNERS, type AgentCode } from "@/lib/types";
 
 export const metadata = { title: "Approvals" };
 
@@ -14,7 +14,7 @@ export default async function ApprovalsPage() {
   const company = new Map(t.companies.map((c) => [c.id, c]));
   const lead = new Map(t.leads.map((l) => [l.id, l]));
   const agent = new Map(t.agents.map((a) => [a.code, a]));
-  const canDecide = !me?.demo && ADMINS.includes(me?.code ?? "");
+  const canDecide = !me?.demo && OWNERS.includes(me?.code ?? "");
 
   const batches = [...t.approval_batches].sort((a, b) =>
     (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1) || b.submitted_at.localeCompare(a.submitted_at));
@@ -30,7 +30,7 @@ export default async function ApprovalsPage() {
   return (
     <div>
       <PageHeader title="Outreach approvals" icon={<CheckCheck size={18} className="text-ink-3" />}
-        subtitle="Jordan batches drafts → Letty approves (here or in Grokbot) → only approved drafts can be sent" />
+        subtitle="Jordan batches drafts → Marvin approves (here or in the app) → only approved drafts can be sent" />
       <div className="grid gap-4 p-4 md:p-6">
         {batches.length === 0 && <div className="card"><Empty title="No batches yet" /></div>}
         {batches.map((b) => {
@@ -47,7 +47,7 @@ export default async function ApprovalsPage() {
                 {b.decided_at && (
                   <span className="flex items-center gap-1.5 text-[12px] text-ink-3">
                     decided {dateTime(b.decided_at)}
-                    {b.decided_by && <>by <AgentAvatar agent={agent.get(b.decided_by as AgentCode)} withName />{b.decided_by === "top_g" && " for Letty"}</>}
+                    {b.decided_by && <>by <AgentAvatar agent={agent.get(b.decided_by as AgentCode)} withName /></>}
                   </span>
                 )}
               </div>

@@ -34,7 +34,7 @@ export function isSlipping(m: Milestone) {
 }
 
 export function openEscalations(e: Escalation[]) {
-  return e.filter((x) => ["open", "in_review", "with_letty"].includes(x.status));
+  return e.filter((x) => ["open", "in_review", "with_owner", "with_letty"].includes(x.status));
 }
 
 export function capacityLimit(terms: Tables["catalogue_terms"]) {

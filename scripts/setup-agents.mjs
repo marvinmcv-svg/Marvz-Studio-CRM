@@ -8,7 +8,7 @@
  *   SUPABASE_SERVICE_ROLE_KEY=... \
  *   SQUAD_EMAIL_DOMAIN=marvz.studio \
  *   [SUPABASE_JWT_SECRET=...]          # legacy JWT secret → mints 1-year agent tokens
- *   [LETTY_EMAIL=letty@yourmail.com]   # Letty's real login email
+ *   [MARVIN_EMAIL=marvin@yourmail.com] # Marvin's real login email (the sole owner)
  *   node scripts/setup-agents.mjs [--only hunter,jordan] [--days 365]
  *
  * Kill switches (no JWT secret needed):
@@ -62,8 +62,8 @@ const unknown = [...(revoke ?? []), ...(activate ?? []), ...(rotate ?? [])].filt
 if (unknown.length) { console.error(`Unknown agent code(s): ${unknown.join(", ")}`); process.exit(1); }
 
 if (revoke || activate) {
-  if (revoke?.some((c) => c === "letty" || c === "marvin")) {
-    console.error("Refusing to deactivate an owner (letty, marvin): that could lock you out of the CRM. Do it in the SQL editor if you really mean it.");
+  if (revoke?.some((c) => c === "marvin")) {
+    console.error("Refusing to deactivate the owner (marvin): that could lock you out of the CRM. Do it in the SQL editor if you really mean it.");
     process.exit(1);
   }
   for (const [targets, active] of [[revoke, false], [activate, true]]) {
@@ -82,7 +82,8 @@ const out = [];
 
 for (const a of agents) {
   if (only && !only.includes(a.code)) continue;
-  const email = a.code === "letty" && process.env.LETTY_EMAIL ? process.env.LETTY_EMAIL : `${a.code.replace("_", "-")}@${DOMAIN}`;
+  if (!a.active) { console.error(`· ${a.code}: inactive, skipped (no login is provisioned)`); continue; }
+  const email = a.code === "marvin" && process.env.MARVIN_EMAIL ? process.env.MARVIN_EMAIL : `${a.code.replace("_", "-")}@${DOMAIN}`;
   let user = users.find((u) => u.id === a.auth_user_id) ?? users.find((u) => u.email === email);
   if (user && rotate?.includes(a.code)) {
     // A new auth user id means every token signed for the old one no longer matches agents.auth_user_id.
@@ -105,7 +106,7 @@ for (const a of agents) {
     if (e) { console.error(`✗ link ${a.code}: ${e.message}`); continue; }
   }
   const row = { agent: a.code, email, user_id: user.id, password: password ?? "(unchanged)" };
-  if (JWT_SECRET && a.code !== "letty") {
+  if (JWT_SECRET && a.code !== "marvin") {
     const now = Math.floor(Date.now() / 1000);
     row.api_token = signJwt({
       aud: "authenticated", role: "authenticated", sub: user.id, email,

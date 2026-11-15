@@ -26,7 +26,7 @@ export async function advanceStage(leadId: string, stage: Stage, reason: string)
   return rpc("advance_stage", { p_lead_id: leadId, p_to_stage: stage, p_reason: reason });
 }
 
-export async function updateEscalation(id: string, action: "review" | "escalate_to_letty" | "resolve" | "dismiss", notes: string) {
+export async function updateEscalation(id: string, action: "review" | "escalate_to_owner" | "escalate_to_letty" | "resolve" | "dismiss", notes: string) {
   return rpc("update_escalation", { p_escalation_id: id, p_action: action, p_notes: notes || null });
 }
 

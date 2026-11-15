@@ -45,9 +45,12 @@ describe("UI stage rules mirror the database", () => {
 });
 
 describe("canMoveStage", () => {
-  it("lets admins make any correction", () => {
+  it("lets admins correct the pipeline, and only Marvin lose a signed client", () => {
     expect(canMoveStage("top_g", "care_plan", "found").ok).toBe(true);
-    expect(canMoveStage("letty", "lost", "discovery").ok).toBe(true);
+    expect(canMoveStage("marvin", "lost", "discovery").ok).toBe(true);
+    expect(canMoveStage("marvin", "signed", "lost").ok).toBe(true);
+    expect(canMoveStage("top_g", "signed", "lost").ok).toBe(false);
+    expect(canMoveStage("letty", "lost", "discovery").ok).toBe(false);
   });
   it("blocks backwards moves, skipping ahead and losing signed clients", () => {
     expect(canMoveStage("quinn", "in_delivery", "replied").ok).toBe(false);
