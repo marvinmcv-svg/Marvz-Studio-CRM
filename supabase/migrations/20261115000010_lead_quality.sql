@@ -1120,6 +1120,39 @@ begin
   return jsonb_build_object('status', 'ready', 'draft_id', v_id, 'recipient', v_recipient, 'recipient_kind', v_kind);
 end $$;
 
+-- Existing drafts written before recipients were required can get one while still unsubmitted.
+create or replace function public.set_draft_recipient(p_draft_id uuid, p_recipient text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare
+  me text := public.require_agent('jordan');
+  d record; v_kind text; v_dnc jsonb;
+  v_recipient text := nullif(trim(coalesce(p_recipient, '')), '');
+begin
+  select * into d from public.outreach_drafts where id = p_draft_id;
+  if d is null then raise exception 'Draft % not found', p_draft_id; end if;
+  if d.status not in ('draft', 'ready') then
+    raise exception 'Draft is %: its recipient is locked once submitted', d.status;
+  end if;
+  if v_recipient is null then raise exception 'p_recipient is required'; end if;
+  v_kind := public.recipient_kind(v_recipient);
+  if v_kind is null then
+    raise exception 'p_recipient "%" is not an email, @handle, http(s) URL or phone number', v_recipient;
+  end if;
+  v_dnc := public.check_do_not_contact(
+             p_email => case when v_kind = 'email' then v_recipient end,
+             p_phone => case when v_kind = 'phone' then v_recipient end,
+             p_instagram => case when v_kind = 'handle' then v_recipient end,
+             p_website => case when v_kind = 'form_url' then v_recipient end);
+  if jsonb_array_length(v_dnc) > 0 then
+    raise exception 'This recipient is on the do-not-contact list (%).', v_dnc;
+  end if;
+  update public.outreach_drafts set recipient = v_recipient, recipient_kind = v_kind where id = p_draft_id;
+  perform public.log_activity('set_draft_recipient', 'draft', p_draft_id, d.lead_id,
+    format('Draft for %s will go to %s', public._lead_name(d.lead_id), v_recipient),
+    jsonb_build_object('recipient', v_recipient, 'previous', d.recipient));
+  return jsonb_build_object('status', 'updated', 'draft_id', p_draft_id, 'recipient', v_recipient, 'recipient_kind', v_kind);
+end $$;
+
 create or replace function public.submit_draft_batch(p_draft_ids uuid[], p_note text default null)
 returns jsonb language plpgsql security definer set search_path = public as $$
 declare me text := public.require_agent('jordan'); v_batch uuid; v_ref bigint; v_bad int; v_n int; v_problems text;
@@ -1242,7 +1275,8 @@ grant execute on function
                      outreach_channel, text, text, boolean, text, text, text, boolean, text, text, uuid, jsonb),
   public.create_leads_bulk(jsonb, boolean, text, text),
   public.update_company_details(uuid, jsonb, text), public.update_contact_details(uuid, jsonb, text),
-  public.create_draft(uuid, text, outreach_channel, text, text, text, text)
+  public.create_draft(uuid, text, outreach_channel, text, text, text, text),
+  public.set_draft_recipient(uuid, text)
 to authenticated, service_role;
 revoke execute on function public._apply_company_details(uuid, jsonb), public._apply_contact_details(uuid, jsonb),
   public._apply_lead_evidence(uuid, jsonb), public.guard_lead_quality() from public, anon, authenticated;

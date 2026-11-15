@@ -258,6 +258,28 @@ begin
 end $$;
 reset role;
 
+-- recipients can be added to drafts written before they were required
+select set_config('request.jwt.claims', '{}', false);
+select set_config('squad.acting_agent', 'top_g', false);
+alter table public.outreach_drafts disable trigger trg_guard_draft;   -- simulate a pre-migration draft
+insert into public.outreach_drafts (lead_id, channel, body, status)
+  values (current_setting('tests.q1')::uuid, 'email', 'Old draft without recipient', 'ready');
+alter table public.outreach_drafts enable trigger trg_guard_draft;
+select set_config('tests.old_draft', (select id::text from public.outreach_drafts where body = 'Old draft without recipient'), false);
+select set_config('squad.acting_agent', '', false);
+select tests.login('jordan');
+set role authenticated;
+select tests.expect_error($$select public.submit_draft_batch(array[current_setting('tests.old_draft')::uuid])$$, 'no recipient');
+select tests.expect_error($$select public.set_draft_recipient(current_setting('tests.old_draft')::uuid, 'not a recipient')$$, 'is not an email');
+select tests.eq((public.set_draft_recipient(current_setting('tests.old_draft')::uuid, 'hola@qfbakery.example'))->>'recipient_kind',
+                'email', 'old draft gets a recipient while unsubmitted');
+select tests.expect_error($$select public.set_draft_recipient(current_setting('tests.d1')::uuid, 'x@y.example')$$, 'locked once submitted');
+reset role;
+select tests.login('hunter');
+set role authenticated;
+select tests.expect_error($$select public.set_draft_recipient(current_setting('tests.old_draft')::uuid, 'a@b.example')$$, 'not allowed');
+reset role;
+
 -- direct table writes on the new tables are refused
 select tests.login('hunter');
 set role authenticated;

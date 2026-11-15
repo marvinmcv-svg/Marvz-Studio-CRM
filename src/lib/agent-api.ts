@@ -15,6 +15,7 @@ export const AGENT_RPCS: Record<string, { fn: string; does: string }[]> = {
     { fn: "screen_lead", does: "Pass (→ screened) or reject (→ lost) with fit score + notes" },
     { fn: "create_draft", does: "Draft to an exact recipient; needs Marvin's PASS + verified domain (→ draft ready)" },
     { fn: "set_draft_hold", does: "Hold or release a draft before batching" },
+    { fn: "set_draft_recipient", does: "Add the exact recipient to an older draft before batching" },
     { fn: "submit_draft_batch", does: "Send drafts to Letty for batch approval" },
     { fn: "log_send", does: "Log a sent message — only for Letty-approved drafts" },
     { fn: "log_reply", does: "Prospect replied → hand to Quinn" },

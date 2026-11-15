@@ -56,6 +56,7 @@ Who does what:
 - Hunter: create_lead, create_leads_bulk, find_duplicate_leads, update_lead, update_company_details,
   update_contact_details, set_lead_hold, link_leads (flag duplicates/sister businesses)
 - Jordan: screen_lead, create_draft (p_recipient REQUIRED: the exact email/@handle/form URL/phone),
+  set_draft_recipient (add the exact recipient to older drafts that have none — required before batching),
   set_draft_hold, submit_draft_batch, log_send, log_reply, add_do_not_contact
 - Quinn: add_discovery_note (p_source required), quote_deal, create_deal, create_proposal, sign_deal
 - Dana: create_scope, create_project, update_milestone, update_deliverable, record_payment,

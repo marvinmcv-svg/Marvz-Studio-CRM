@@ -390,6 +390,11 @@ list, or when any quality gate fails (held / on hold / frozen / manual check not
 the error lists every reason). Channel defaults to the lead's.
 → `{ "status": "ready", "draft_id": "…", "recipient": "hola@…", "recipient_kind": "email" }`
 
+#### `set_draft_recipient(p_draft_id uuid, p_recipient text)`
+Adds or changes the recipient of a draft that is not yet in a batch (same validation and do-not-contact
+check as `create_draft`). Use it for drafts written before recipients were required — they can't be
+batched until they have one. → `{ "status": "updated", "recipient": "…", "recipient_kind": "email" }`
+
 #### `set_draft_hold(p_draft_id uuid, p_on_hold boolean, p_reason text?)`
 Hold (reason required) or release a draft that isn't in a batch yet.
 
