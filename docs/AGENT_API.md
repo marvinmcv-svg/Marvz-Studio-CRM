@@ -122,7 +122,7 @@ Never work around a refusal (e.g. by trying another function to force the same r
 | `letty` | Owner (human) | everything; edits catalogue and team |
 | `marvin` | Admin (human) | everything; edits catalogue and team |
 | `top_g` | Coordinator (AI admin) | every function; cannot edit catalogue/team |
-| `hunter` | Lead finder | `create_lead`, `update_lead`, `add_do_not_contact` + shared |
+| `hunter` | Lead finder | `create_lead`, `create_leads_bulk`, `update_lead`, `add_do_not_contact` + shared |
 | `jordan` | Outreach | `screen_lead`, `create_draft`, `submit_draft_batch`, `log_send`, `log_reply`, `update_lead`, `add_do_not_contact` + shared |
 | `quinn` | Closer | `add_discovery_note`, `create_deal`, `create_proposal`, `sign_deal`, `log_reply`, `update_lead`, `add_do_not_contact` + shared |
 | `dana` | Delivery | `create_scope`, `create_project`, `update_milestone`, `update_deliverable`, `record_payment`, `complete_project`, `record_testimonial`, `add_referral`, `start_care_plan`, `log_care_hours`, `add_lesson`, `update_lead`, `add_do_not_contact` + shared |
@@ -287,6 +287,31 @@ Results:
 `duplicate` → don't create; only resend with `"p_force": true` if you're sure it's a different business.
 `do_not_contact` → skip permanently.
 
+#### `create_leads_bulk(p_leads jsonb, p_force boolean = false)` — bulk upload
+Uploads **up to 100 leads in one call**. Each row goes through exactly the same checks as `create_lead`
+(do-not-contact, duplicates — including against earlier rows in the same batch — logging). A bad row
+never stops the batch; it is reported with its error and the rest continue. Takes ~0.3 s per 100 leads.
+
+Each row is an object with the `create_lead` fields **without the `p_` prefix**. Only `business` is required.
+`service_interest` and `languages` may be arrays or comma-separated strings; `channel` is case-insensitive;
+`"force": true` on a row overrides the duplicate check for that row only.
+```json
+{ "p_leads": [
+  { "business": "Café Altura", "contact_name": "Mariela Rojas", "phone": "+591 71234567",
+    "website": "cafealtura.bo", "instagram": "@cafealtura", "industry": "Cafe", "city": "Santa Cruz",
+    "country": "BO", "market": "US", "service_interest": ["presence"], "budget_band": "2-5k",
+    "languages": "es", "source": "Google Maps", "channel": "whatsapp", "notes": "Busy on weekends" },
+  { "business": "Brava Fitness Studio", "email": "jess@bravafit.com", "city": "Austin", "country": "US" }
+] }
+→ { "status": "done", "total": 2, "created": 1, "duplicates": 1, "do_not_contact": 0, "errors": 0,
+    "results": [
+      { "row": 1, "business": "Café Altura", "status": "created", "code": "SQ-64", "lead_id": "…", "matches": null },
+      { "row": 2, "business": "Brava Fitness Studio", "status": "duplicate", "code": null, "lead_id": null,
+        "matches": [{ "code": "SQ-12", "business": "Brava Fitness", "matched_on": ["similar name"] }] } ] }
+```
+Row `status` is `created`, `duplicate`, `do_not_contact` or `error` (with an `error` message, e.g. a
+missing business name or an invalid channel). More than 100 rows → the call is refused; split the list.
+
 #### `update_lead(p_lead_id uuid, p_fields jsonb, p_reason text?)`
 Update lead fields (not the stage). Allowed keys in `p_fields`: `industry`, `service_interest` (array),
 `market_code`, `budget_band`, `timeline`, `languages` (array), `source`, `channel`, `portfolio_case`,
@@ -417,13 +442,16 @@ Lessons must be anonymous: no client/contact names, emails, phone numbers, URLs 
 ## 7. Workflows
 
 ### 7.1 Bulk lead upload (Hunter or Top G)
-For each lead, one request at a time:
-1. `create_lead` with the fields you have (never invent contact details).
-2. `created` → record `code` + `lead_id`. `duplicate` → skip and note the matching codes
-   (only `p_force: true` if certainly a different business). `do_not_contact` → skip permanently.
-3. On 429/5xx wait 10 s and retry once; on any other error record the message and continue.
-4. Finish with a report: processed, created (codes), duplicates (matching codes), do-not-contact, errors.
-Don't screen or message imported leads; Jordan screens them next.
+1. Clean the list: one object per business, `business` filled in, phones with country code, no invented
+   contact details. Remove obvious repeats within your own list.
+2. Split it into chunks of **100 or fewer** and call `create_leads_bulk` once per chunk, one chunk at a time.
+3. Read `results`: `created` → keep `code` + `lead_id`; `duplicate` → skip and note the matching codes
+   (resend that one row with `"force": true` only if certainly a different business); `do_not_contact` →
+   skip permanently; `error` → fix the row per the message and resend just that row.
+4. On HTTP 429/5xx for a chunk, wait 10 s and resend that chunk once (rows already created will come back
+   as duplicates, which is safe).
+5. Finish with a report: processed, created (codes), duplicates (matching codes), do-not-contact, errors.
+For a single lead, `create_lead` works the same way. Don't screen or message imported leads; Jordan screens them next.
 
 ### 7.2 Outreach (Jordan → Letty → Jordan)
 `screen_lead` → `create_draft` → `submit_draft_batch` → *wait for Letty/Marvin's decision* →

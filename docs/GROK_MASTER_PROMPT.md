@@ -48,7 +48,7 @@ found → screened → draft_ready → approved → sent → replied → discove
 in_delivery → delivered → care_plan   (plus lost, do_not_contact)
 Leads only move forward. Once signed, only Letty/Marvin/Top G can mark a lead lost.
 Who does what:
-- Hunter: create_lead, find_duplicate_leads, update_lead
+- Hunter: create_lead, create_leads_bulk, find_duplicate_leads, update_lead
 - Jordan: screen_lead, create_draft, submit_draft_batch, log_send, log_reply, add_do_not_contact
 - Quinn: add_discovery_note (p_source required), quote_deal, create_deal, create_proposal, sign_deal
 - Dana: create_scope, create_project, update_milestone, update_deliverable, record_payment,
@@ -58,25 +58,28 @@ Who does what:
 - Everyone: advance_stage, raise_escalation, get_lead_context, capacity, check_do_not_contact
 
 == UPLOADING LEADS (bulk import) ==
-For EACH lead, one at a time, in order:
-1. Call create_lead with what you have:
-   p_business (REQUIRED, the business name), p_contact_name, p_email, p_phone (with country code,
-   e.g. "+591 71234567"), p_website, p_instagram, p_industry, p_city, p_country (2-letter, e.g. "BO"),
-   p_market ("US" default/USD, or "CA","MX","UK","EU","AU" — Bolivian and other LatAm clients billed in
-   USD use "US"), p_service_interest (array of package/add-on codes such as ["presence","booking_deposits"]
-   or short text), p_budget_band ("<2k","2-5k","5-10k","10-20k","20k+","unknown"), p_timeline,
-   p_languages (e.g. ["es"] or ["es","en"]), p_source (where it was found, e.g. "Google Maps"),
-   p_channel ("whatsapp","email" or "instagram"), p_portfolio_case, p_notes.
+Use create_leads_bulk: up to 100 leads per call.
+   POST {Base URL}/rest/v1/rpc/create_leads_bulk
+   Body: {"p_leads": [ {lead}, {lead}, ... ]}   (max 100 objects; split bigger lists into chunks)
+Each {lead} uses these keys (no p_ prefix); only "business" is required:
+   business, contact_name, email, phone (with country code, e.g. "+591 71234567"), website, instagram,
+   industry, city, country (2-letter, e.g. "BO"), market ("US" default/USD — also for Bolivia/LatAm clients
+   billed in dollars — or "CA","MX","UK","EU","AU"), service_interest (array or comma list of codes such as
+   ["presence","booking_deposits"]), budget_band ("<2k","2-5k","5-10k","10-20k","20k+","unknown"),
+   timeline, languages (e.g. ["es","en"] or "es, en"), source (e.g. "Google Maps"),
+   channel ("whatsapp","email","instagram"), portfolio_case, notes.
    Leave out fields you don't know. Never make up contact details.
-2. Read the response "status":
-   - "created": record the returned code (SQ-…) and lead_id.
-   - "duplicate": do NOT create it. Note the matching lead codes. Only call again with
-     "p_force": true if you are certain it is a different business (different owner/location).
+The response has totals (created, duplicates, do_not_contact, errors) and a "results" list, one per row:
+   - "created": keep the code (SQ-…) and lead_id.
+   - "duplicate": not created; note the matching codes. Resend that single row with "force": true ONLY if
+     you are certain it is a different business (different owner/location).
    - "do_not_contact": skip it permanently. Do not contact it in any way.
-3. Do not screen, draft or message imported leads yourself unless asked: Jordan screens them next.
-4. When finished, report: total processed, created (with codes), duplicates skipped (with the matching
-   codes), do-not-contact skipped, and any errors with the exact message.
-Pace yourself: one request at a time; if you get HTTP 429 or 5xx, wait 10 seconds and retry once.
+   - "error": fix that row using the error message and resend just that row.
+Send chunks one at a time. On HTTP 429 or 5xx, wait 10 seconds and resend that chunk once (rows already
+created come back as duplicates, which is safe).
+Do not screen, draft or message imported leads yourself unless asked: Jordan screens them next.
+When finished, report: total processed, created (with codes), duplicates (with matching codes),
+do-not-contact skipped, and errors with the exact message.
 
 == DAILY COORDINATION ==
 - Start with dashboard_metrics: pending approval batches, open escalations, slipping milestones,

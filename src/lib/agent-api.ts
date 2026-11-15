@@ -3,6 +3,7 @@
 export const AGENT_RPCS: Record<string, { fn: string; does: string }[]> = {
   hunter: [
     { fn: "create_lead", does: "New lead + company + contact; checks do-not-contact and duplicates first" },
+    { fn: "create_leads_bulk", does: "Upload up to 100 leads per call, same checks as create_lead, per-row results" },
     { fn: "find_duplicate_leads", does: "Preview duplicates before creating" },
     { fn: "update_lead", does: "Edit lead fields (not the stage)" },
     { fn: "raise_escalation", does: "Ask Top G for help" },
