@@ -1,6 +1,6 @@
 # Squad CRM
 
-Squad CRM is the internal CRM for **Marvz Studio** (web design, web apps and AI assistants; Santa Cruz, Bolivia). It is used by Letty (the owner), Marvin (admin) and five Grokbot AI agents: **Top G, Hunter, Jordan, Quinn and Dana**.
+Squad CRM is the internal CRM for **Marvz Studio** (web design, web apps and AI assistants; Santa Cruz, Bolivia). Marvin is the sole owner and the only approver. Five Grokbot AI agents work in it: **Top G, Hunter, Jordan, Quinn and Dana**. Letty has no approval authority; her account is deactivated and her historical rows stay in the audit log.
 
 It is built on Next.js 16 and Supabase (Postgres, Auth, Row Level Security and Realtime), and deploys to Vercel. The UI is dark-mode, dense and keyboard-driven, and works on a phone.
 
@@ -13,13 +13,13 @@ Found → Screened → Draft ready → Approved → Sent → Replied → Discove
 
 | | |
 |---|---|
-| **Overview (Top G dashboard)** | KPIs (MRR, pipeline, win rate, average deal, capacity), a "needs attention" queue (escalations, Letty's approval batches, slipping milestones, renewals), stage funnel, agent workload and a live activity feed |
+| **Overview (Top G dashboard)** | KPIs (MRR, pipeline, win rate, average deal, capacity), a "needs attention" queue (escalations, Marvin's approval batches, slipping milestones, renewals), stage funnel, agent workload and a live activity feed |
 | **Pipeline** | Kanban and table views. Filter by stage, industry, service, market and owner. Drag a card to move it; a reason is required and logged |
 | **Lead record** | Contact, qualification and ownership on the left. Activity, stage history, outreach, discovery (with sources) and deals/proposals tabs on the right |
-| **Approvals** | Jordan's batches. Letty approves or rejects each draft; nothing can be sent unapproved |
-| **Escalations** | Agent → Top G → Letty chain, with severity, proposed action and resolution notes |
+| **Approvals** | Jordan's batches. Marvin approves or rejects each draft; nothing can be sent unapproved. Top G cannot approve for him |
+| **Escalations** | Agent → Top G → Marvin chain, with severity, proposed action and resolution notes |
 | **Activity log** | Append-only record of every action by every agent, filterable by agent and action |
-| **Catalogue** | Read-only price list with a market switcher (USD, CAD, MXN, GBP, EUR, AUD). Only Letty can edit it |
+| **Catalogue** | Read-only price list with a market switcher (USD, CAD, MXN, GBP, EUR, AUD). Only Marvin can edit it |
 | **Deal builder** | Package + add-ons + market + payment plan + rush, giving a live quote and payment milestones. Saving re-quotes in the database |
 | **Projects** | Capacity meter (4 per month), milestones, deliverables vs. what the client owes, slip warnings with proposed fixes, line-by-line scope check, payments |
 | **Revenue** | MRR, ARR run-rate, win rate, average deal, signed value and cash collected by month, breakdown by market |
@@ -32,9 +32,9 @@ Keyboard: `⌘K` or `/` opens search, `n` creates a new lead, `b` opens the deal
 
 * Every squad member, human or AI, is a **Supabase Auth user** linked to a row in `public.agents`. Row Level Security reads the caller's identity from the token.
 * **Writes go through the RPCs.** Agents can read through RLS, but direct inserts, updates and deletes are refused on the pipeline-critical tables (leads, drafts, approval batches, deals, proposals, payments, projects, scopes, care plans, do-not-contact). Every write is validated and logged.
-* **RLS on every table.** Hunter writes leads. Jordan writes drafts and batches. Quinn writes discovery, deals and proposals. Dana writes delivery, care, testimonials and lessons. Top G and Letty can do everything. **Only Letty can write the catalogue.**
+* **RLS on every table.** Hunter writes leads. Jordan writes drafts and batches. Quinn writes discovery, deals and proposals. Dana writes delivery, care, testimonials and lessons. Top G coordinates and can read everything, but cannot approve. **Only Marvin can write the catalogue, edit the team, approve outreach, or take owner-gated lead actions.** Letty has none of those rights; her agent row is inactive.
 * **Guard triggers** apply even to direct table edits:
-  * Stage moves are checked per role **and against the lead's current stage**: no skipping ahead, no moving backwards, no reviving lost or do-not-contact leads and no marking a signed client lost (Letty and Top G can correct anything). Every move is written to `stage_changes` with the agent, time and reason.
+  * Stage moves are checked per role **and against the lead's current stage**: no skipping ahead, no moving backwards, no reviving lost or do-not-contact leads and no marking a signed client lost (Marvin and Top G can correct the pipeline; only Marvin can mark a signed client lost or delete a lead). Every move is written to `stage_changes` with the agent, time and reason.
   * Jordan cannot approve his own drafts.
   * A draft can only be sent once it is approved in an approved batch. Batches are created as pending, and a draft's content is locked once it is submitted.
   * Adding a do-not-contact entry blocks every matching lead and cancels their unsent drafts; drafting and sending to a listed contact is refused.
@@ -45,7 +45,7 @@ Keyboard: `⌘K` or `/` opens search, `n` creates a new lead, `b` opens the deal
 * `activity_log` and `stage_changes` are **append-only**. Agents have no insert, update or delete rights on them; only the security-definer RPCs write there.
 * The anon role has no table access and can call no function.
 * **Functions are private by default.** A function added by a future migration can't be called by anyone until that migration runs `grant execute on function public.<name>(…) to authenticated;`. Only grant API functions; keep helpers private.
-* Approvals record who actually decided: Letty, or Top G recording on her behalf (shown as "Top G for Letty").
+* Approvals record the caller. Only Marvin can approve, so `decided_by` / `approved_by` are `marvin`. Top G cannot approve on anyone's behalf.
 
 The SQL test suite checks all of this; see [Tests](#tests).
 
@@ -70,11 +70,27 @@ Demo mode has no sign-in, so a **production** build (`next start`, Vercel) refus
    npx supabase link --project-ref <ref>
    npx supabase db push
    ```
-   or by pasting the seven files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue; the fifth and sixth add the hardening rules; the seventh adds Marvin as an admin.
+   or by pasting the files in `supabase/migrations/`, in filename order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue. `20261115000009_marvin_sole_owner.sql` makes Marvin the only owner and approver and deactivates Letty. On a database that already has the earlier migrations, apply only that new file. Do not re-run older files, and do not run `seed.sql` against production.
+
+   **Production (already migrated through `20261115000008_bulk_leads.sql`).** From a machine that is linked to the project, and only when Marvin is ready to change live permissions:
+
+   ```bash
+   npx supabase link --project-ref <ref>
+   npx supabase db push
+   ```
+
+   `db push` applies pending files only. The equivalent by hand is to open **SQL Editor**, paste the whole of `supabase/migrations/20261115000009_marvin_sole_owner.sql`, and run it once. Afterwards, signed in as Marvin:
+
+   ```sql
+   select code, title, active from public.agents where code in ('marvin', 'letty', 'top_g');
+   select public.is_owner();  -- true
+   ```
+
+   Letty's login stops working (`agents.active = false`). Her past approvals and the audit log are unchanged. Marvin uses the account he already has.
 3. Optional demo data: run `supabase/seed.sql` in the SQL editor. Remove it before going live with `supabase/demo_cleanup.sql`, which keeps the team and catalogue.
 4. Check **Database → Publications → supabase_realtime** includes `activity_log`. The migration adds it, which drives live refresh.
 5. **Turn off public sign-ups** (Authentication → Sign In / Providers → *Allow new users to sign up* = off). Strangers who sign up still can't see anything (every policy and RPC requires a squad member, and the tests cover this), but there is no reason to allow it.
-6. **Set the real per-market package prices.** The seed fills `catalogue_package_prices` by converting USD with each market's factor. Letty should edit those rows to the prices she actually wants to charge.
+6. **Set the real per-market package prices.** The seed fills `catalogue_package_prices` by converting USD with each market's factor. Marvin should edit those rows to the prices he actually wants to charge. Only his login can write the catalogue.
 
 ## 3. Create the squad accounts
 
@@ -82,14 +98,14 @@ Demo mode has no sign-in, so a **production** build (`next start`, Vercel) refus
 SUPABASE_URL=https://<ref>.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=<service role key> \
 SQUAD_EMAIL_DOMAIN=marvz.studio \
-LETTY_EMAIL=<letty's real email> \
+MARVIN_EMAIL=<marvin's real email> \
 SUPABASE_JWT_SECRET=<legacy JWT secret, optional> \
 npm run setup-agents
 ```
 
 The script creates one Auth user per squad member (`hunter@marvz.studio`, …), links each to `public.agents`, and prints the passwords. If you provide `SUPABASE_JWT_SECRET`, it also prints a **1-year API token per agent**. It is safe to re-run. Put the output straight into your password manager or Grokbot's secrets, never into chat.
 
-Letty signs in to the web app with her email and the printed password. She can change the password from the Supabase dashboard.
+Marvin signs in to the web app with his email and the printed password. He can change the password from the Supabase dashboard. Letty is inactive, so the script does not provision a login for her.
 
 ## 4. Deploy to Vercel
 
@@ -124,7 +140,7 @@ npm run setup-agents -- --rotate hunter     # new auth user, so all old tokens a
 npm run setup-agents -- --activate hunter   # switch Hunter back on once the new credentials are in Grokbot
 ```
 
-`--revoke` sets `agents.active = false`, which every policy and RPC checks. It needs only the service role key. `--revoke letty` is refused so the owner can't lock herself out.
+`--revoke` sets `agents.active = false`, which every policy and RPC checks. It needs only the service role key. `--revoke marvin` is refused so the owner can't lock himself out.
 
 **Option B: email and password.** Use this for projects on the new asymmetric signing keys. The agent signs in once per session:
 

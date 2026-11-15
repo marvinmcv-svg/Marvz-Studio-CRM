@@ -10,7 +10,7 @@ import { Chip } from "./ui";
 type D = { id: string; leadId: string; business: string; code: string; channel: string; language: string; subject: string | null; body: string; personalisation: string | null };
 
 export function BatchReview({ batchId, drafts, canDecide }: { batchId: string; drafts: D[]; canDecide: boolean }) {
-  // Nothing is pre-selected: Letty decides each draft explicitly before the batch can be saved.
+  // Nothing is pre-selected: Marvin decides each draft explicitly before the batch can be saved.
   const [decision, setDecision] = useState<Record<string, "approve" | "reject" | undefined>>({});
   const [note, setNote] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);

@@ -113,7 +113,7 @@ export type Me = { code: AgentCode; name: string; email: string | null; demo: bo
 export const getMe = cache(async (): Promise<Me | null> => {
   if (!isLive) {
     if (!demoAllowed()) throw new Error(NOT_CONFIGURED);
-    return { code: "letty", name: "Letty", email: null, demo: true };
+    return { code: "marvin", name: "Marvin", email: null, demo: true };
   }
   const sb = await supabaseServer();
   const { data: { user } } = await sb.auth.getUser();

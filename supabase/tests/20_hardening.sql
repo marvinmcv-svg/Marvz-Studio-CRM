@@ -55,12 +55,12 @@ select tests.expect_error($$insert into public.outreach_drafts (lead_id, channel
                             from public.approval_batches where status = 'approved' limit 1$$, 'start as draft/ready');
 select tests.expect_error($$update public.outreach_drafts set body = 'edited' where status in ('approved', 'sent', 'in_batch')$$,
                           'content is locked');
-select tests.expect_error($$update public.outreach_drafts set status = 'rejected' where status = 'ready'$$, 'only letty');
--- even Top G cannot change what Letty approved
+select tests.expect_error($$update public.outreach_drafts set status = 'rejected' where status = 'ready'$$, 'only marvin');
+-- even Top G cannot change what Marvin approved, or reopen a decided batch
 select set_config('squad.acting_agent', 'top_g', false);
 select tests.expect_error($$update public.outreach_drafts set body = 'edited' where status = 'approved'$$, 'content is locked');
 select tests.expect_error($$update public.outreach_drafts set status = 'approved' where status = 'sent'$$, 'already sent');
-select tests.expect_error($$update public.approval_batches set status = 'pending' where status = 'approved'$$, 'already decided');
+select tests.expect_error($$update public.approval_batches set status = 'pending' where status = 'approved'$$, 'only marvin');
 select set_config('squad.acting_agent', '', false);
 
 -- ---------------------------------------------------------------------------

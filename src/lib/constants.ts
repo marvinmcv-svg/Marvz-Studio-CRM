@@ -1,10 +1,10 @@
-import type { Stage } from "./types";
+import { OWNERS, type Stage } from "./types";
 
 export const STAGES: { key: Stage; label: string; tone: Tone; owner: string }[] = [
   { key: "found", label: "Found", tone: "slate", owner: "hunter" },
   { key: "screened", label: "Screened", tone: "slate", owner: "jordan" },
   { key: "draft_ready", label: "Draft ready", tone: "blue", owner: "jordan" },
-  { key: "approved", label: "Approved", tone: "blue", owner: "letty" },
+  { key: "approved", label: "Approved", tone: "blue", owner: "marvin" },
   { key: "sent", label: "Sent", tone: "blue", owner: "jordan" },
   { key: "replied", label: "Replied", tone: "violet", owner: "jordan" },
   { key: "discovery", label: "Discovery", tone: "violet", owner: "quinn" },
@@ -28,7 +28,6 @@ export const CHANNELS = ["whatsapp", "email", "instagram"] as const;
 
 /** Stages each agent may move a lead INTO (mirrors public.allowed_target_stages). */
 export const ALLOWED_TARGETS: Record<string, Stage[] | "all"> = {
-  letty: "all",
   marvin: "all",
   top_g: "all",
   hunter: ["found", "lost", "do_not_contact"],
@@ -62,15 +61,20 @@ export const STAGE_PREDECESSORS: Record<Stage, Stage[]> = {
 
 /** Which function should make this move instead of a manual stage change. */
 const VIA_RPC: Partial<Record<Stage, string>> = {
-  approved: "Letty approves drafts on the Approvals page",
+  approved: "Marvin approves drafts on the Approvals page",
   sent: "Jordan logs the send with log_send",
   signed: "Quinn signs the deal with sign_deal",
   in_delivery: "Dana starts the project with create_project",
 };
 
 /** Can `agent` move a lead from `from` to `to`? Returns the reason when not. */
+const SIGNED_OR_LATER: Stage[] = ["signed", "in_delivery", "delivered", "care_plan"];
+
 export function canMoveStage(agent: string, from: Stage, to: Stage): { ok: true } | { ok: false; reason: string } {
   if (from === to) return { ok: false, reason: "Current stage" };
+  if (to === "lost" && SIGNED_OR_LATER.includes(from) && !OWNERS.includes(agent)) {
+    return { ok: false, reason: "Only Marvin can mark a signed client lost" };
+  }
   const targets = ALLOWED_TARGETS[agent];
   if (!targets) return { ok: false, reason: "Not a squad member" };
   if (targets === "all") return { ok: true };

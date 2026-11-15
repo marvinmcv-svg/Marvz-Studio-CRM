@@ -89,7 +89,7 @@ select tests.expect_error($$insert into public.lessons (title, body) values ('t'
 reset role;
 
 -- ---------------------------------------------------------------------------
--- 3. Catalogue: only Letty edits
+-- 3. Catalogue: only Marvin edits
 -- ---------------------------------------------------------------------------
 select tests.login('top_g');
 set role authenticated;
@@ -103,14 +103,14 @@ end $$;
 select tests.expect_error($$insert into public.catalogue_addons (code, name, price_usd) values ('hack', 'Hack', 1)$$, 'row-level security');
 reset role;
 
-select tests.login('letty');
+select tests.login('marvin');
 set role authenticated;
 do $$
 declare n int;
 begin
   update public.catalogue_addons set description = 'Monthly blog posts' where code = 'blog';
   get diagnostics n = row_count;
-  perform tests.eq(n, 1, 'Letty can edit the catalogue');
+  perform tests.eq(n, 1, 'Marvin can edit the catalogue');
 end $$;
 reset role;
 
@@ -167,9 +167,9 @@ begin
 end $$;
 reset role;
 
-select tests.login('letty');
+select tests.login('marvin');
 set role authenticated;
-select tests.eq((public.record_approval(current_setting('tests.batch')::uuid))->>'approved', '1', 'Letty approves the batch');
+select tests.eq((public.record_approval(current_setting('tests.batch')::uuid))->>'approved', '1', 'Marvin approves the batch');
 reset role;
 
 select tests.login('jordan');
@@ -237,7 +237,7 @@ select tests.expect_error($$select public.record_approval((select id from public
 reset role;
 
 -- ---------------------------------------------------------------------------
--- 7. Escalation chain: agent → Top G → Letty
+-- 7. Escalation chain: agent → Top G → Marvin
 -- ---------------------------------------------------------------------------
 select tests.login('hunter');
 set role authenticated;
@@ -248,14 +248,15 @@ select tests.eq((select status::text from public.escalations where id = current_
 reset role;
 select tests.login('top_g');
 set role authenticated;
-select public.update_escalation(current_setting('tests.esc')::uuid, 'escalate_to_letty', 'Needs Letty');
-select tests.eq((select status::text from public.escalations where id = current_setting('tests.esc')::uuid), 'with_letty', 'Top G passes to Letty');
+select public.update_escalation(current_setting('tests.esc')::uuid, 'escalate_to_letty', 'Needs Marvin');
+select tests.eq((select status::text from public.escalations where id = current_setting('tests.esc')::uuid), 'with_owner', 'Top G passes to Marvin');
+select tests.eq((select assigned_to from public.escalations where id = current_setting('tests.esc')::uuid), 'marvin', 'assigned to Marvin');
 reset role;
-select tests.login('letty');
+select tests.login('marvin');
 set role authenticated;
 select tests.expect_error($$select public.update_escalation(current_setting('tests.esc')::uuid, 'resolve', '')$$, 'resolution notes');
-select public.update_escalation(current_setting('tests.esc')::uuid, 'resolve', 'Handled by Letty');
-select tests.eq((select resolved_by from public.escalations where id = current_setting('tests.esc')::uuid), 'letty', 'Letty resolves');
+select public.update_escalation(current_setting('tests.esc')::uuid, 'resolve', 'Handled by Marvin');
+select tests.eq((select resolved_by from public.escalations where id = current_setting('tests.esc')::uuid), 'marvin', 'Marvin resolves');
 
 -- ---------------------------------------------------------------------------
 -- 8. Dashboard + activity log integrity

@@ -11,8 +11,8 @@ export const AGENT_RPCS: Record<string, { fn: string; does: string }[]> = {
   jordan: [
     { fn: "screen_lead", does: "Pass (→ screened) or reject (→ lost) with fit score + notes" },
     { fn: "create_draft", does: "Personalised outreach draft (→ draft ready)" },
-    { fn: "submit_draft_batch", does: "Send drafts to Letty for batch approval" },
-    { fn: "log_send", does: "Log a sent message — only for Letty-approved drafts" },
+    { fn: "submit_draft_batch", does: "Send drafts to Marvin for batch approval" },
+    { fn: "log_send", does: "Log a sent message — only for Marvin-approved drafts" },
     { fn: "log_reply", does: "Prospect replied → hand to Quinn" },
     { fn: "add_do_not_contact", does: "Block a business / contact, every matching lead and their unsent drafts" },
   ],
@@ -38,15 +38,16 @@ export const AGENT_RPCS: Record<string, { fn: string; does: string }[]> = {
   ],
   top_g: [
     { fn: "dashboard_metrics", does: "One-call overview: MRR, pipeline, escalations, capacity" },
-    { fn: "update_escalation", does: "Review, send to Letty, resolve or dismiss" },
-    { fn: "record_approval", does: "Record Letty's batch decision from Grokbot" },
-    { fn: "advance_stage", does: "Any stage change, reason required" },
+    { fn: "update_escalation", does: "Review, resolve or dismiss routine escalations, or send one to Marvin" },
+    { fn: "advance_stage", does: "Stage corrections except marking a signed client lost; reason required" },
     { fn: "get_lead_context", does: "Everything about one lead in one call" },
   ],
-  letty: [
-    { fn: "record_approval", does: "Approve / reject outreach batches" },
-    { fn: "update_escalation", does: "Resolve what Top G escalates" },
-    { fn: "(catalogue tables)", does: "Only Letty can edit prices, markets and terms" },
+  marvin: [
+    { fn: "record_approval", does: "Approve or reject outreach batches. Only Marvin can." },
+    { fn: "update_escalation", does: "Decide escalations that need the owner" },
+    { fn: "(catalogue tables)", does: "Only Marvin can edit prices, markets and terms" },
+    { fn: "(agents table)", does: "Only Marvin can edit the team directory" },
   ],
+  letty: [],
 };
 export const SHARED_RPCS = ["advance_stage", "raise_escalation", "get_lead_context", "capacity", "check_do_not_contact"];

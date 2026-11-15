@@ -19,7 +19,7 @@ export default async function CataloguePage({ searchParams }: { searchParams: Pr
   return (
     <div>
       <PageHeader title="Price catalogue" icon={<Package size={18} className="text-ink-3" />}
-        subtitle={<span className="inline-flex items-center gap-1.5"><Lock size={12} /> Read-only for agents · only Letty edits (enforced by RLS) · agents quote exclusively from here</span>} />
+        subtitle={<span className="inline-flex items-center gap-1.5"><Lock size={12} /> Read-only for agents · only Marvin edits (enforced by RLS) · agents quote exclusively from here</span>} />
       <div className="flex flex-wrap items-center gap-1.5 border-b border-line px-4 py-2.5 md:px-6">
         <span className="mr-1 text-[12px] text-ink-3">Market</span>
         {markets.map((x) => (

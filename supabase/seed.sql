@@ -100,14 +100,14 @@ begin
     end if;
   end loop;
 
-  -- Batch 1: everything beyond draft_ready → approved by Letty
+  -- Batch 1: everything beyond draft_ready → approved by Marvin
   perform pg_temp.act('jordan');
   r := public.submit_draft_batch(drafts_b1, 'Weekly batch: hospitality, health and retail.');
   b1 := (r->>'batch_id')::uuid;
-  perform pg_temp.act('top_g');
-  perform public.record_approval(b1, null, '{}', 'Approved in Grokbot by Letty — love the hotel one.');
+  perform pg_temp.act('marvin');
+  perform public.record_approval(b1, null, '{}', 'Approved by Marvin — love the hotel one.');
 
-  -- Batch 2: still waiting for Letty
+  -- Batch 2: still waiting for Marvin
   perform pg_temp.act('jordan');
   r := public.submit_draft_batch(drafts_b2, 'Toronto + Guadalajara, both bilingual.');
 
@@ -225,8 +225,8 @@ begin
     'Prospect will sign this week if we drop the 25% rush surcharge but still launch in 4 weeks.',
     'medium', ids[13], null, 'Keep catalogue price; offer standard timeline without rush, or move AI assistant to Phase 2.');
   perform pg_temp.act('top_g');
-  perform public.update_escalation((r->>'escalation_id')::uuid, 'escalate_to_letty',
-    'Discounts are Letty-only. My recommendation: keep price, offer 40/30/30.');
+  perform public.update_escalation((r->>'escalation_id')::uuid, 'escalate_to_owner',
+    'Discounts are Marvin-only. My recommendation: keep price, offer 40/30/30.');
 
   perform pg_temp.act('jordan');
   r := public.raise_escalation('Vela Yoga wants the site in Catalan too',

@@ -25,22 +25,28 @@ reset role;
 
 select tests.login('top_g');
 set role authenticated;
-select tests.eq((public.record_approval(current_setting('tests.appr_batch')::uuid))->>'decided_by', 'top_g',
+select tests.expect_error($$select public.record_approval(current_setting('tests.appr_batch')::uuid)$$,
+                          'only marvin');
+reset role;
+
+select tests.login('marvin');
+set role authenticated;
+select tests.eq((public.record_approval(current_setting('tests.appr_batch')::uuid))->>'decided_by', 'marvin',
                 'record_approval reports the real decider');
 select tests.eq((select decided_by from public.approval_batches where id = current_setting('tests.appr_batch')::uuid),
-                'top_g', 'batch.decided_by is Top G when Top G records the decision');
+                'marvin', 'batch.decided_by is Marvin when Marvin records the decision');
 select tests.eq((select approved_by from public.outreach_drafts where id = current_setting('tests.appr_draft')::uuid),
-                'top_g', 'draft.approved_by is Top G when Top G records the decision');
+                'marvin', 'draft.approved_by is Marvin when Marvin records the decision');
 select tests.eq((select reason from public.stage_changes where lead_id = current_setting('tests.appr_lead')::uuid
-                 and to_stage = 'approved' order by created_at desc limit 1) like 'Approved by Top G for Letty%', true,
-                'stage history says Top G recorded it for Letty');
+                 and to_stage = 'approved' order by created_at desc limit 1) like 'Approved by Marvin%', true,
+                'stage history names Marvin, not someone approving for him');
 reset role;
 
 select tests.eq((select count(*) from public.approval_batches b
-                 where b.status <> 'pending' and b.decided_by = 'letty'
+                 where b.status <> 'pending' and b.decided_by = 'marvin'
                    and exists (select 1 from public.activity_log a where a.entity_id = b.id
-                               and a.action = 'record_approval' and a.agent_code = 'letty')) > 0, true,
-                'batches Letty decided still record letty');
+                               and a.action = 'record_approval' and a.agent_code = 'marvin')) > 0, true,
+                'batches Marvin decided record marvin');
 
 -- ---------------------------------------------------------------------------
 -- 2. Dashboard MRR follows care-plan read rights

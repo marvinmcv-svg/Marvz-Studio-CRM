@@ -119,18 +119,19 @@ Never work around a refusal (e.g. by trying another function to force the same r
 
 | Login | Role | Can call |
 |---|---|---|
-| `letty` | Owner (human) | everything; edits catalogue and team |
-| `marvin` | Admin (human) | everything; edits catalogue and team |
-| `top_g` | Coordinator (AI admin) | every function; cannot edit catalogue/team |
+| `marvin` | Owner (human) | the only approver: `record_approval`, owner escalations, catalogue and team edits, owner-gated lead actions |
+| `letty` | Former member (inactive) | no approval authority and no login. Historical rows stay. Do not call the API as Letty |
+| `top_g` | Coordinator (AI admin) | coordination and read; `update_escalation` for routine items. Cannot approve batches, edit the catalogue or team, or decide for Marvin |
 | `hunter` | Lead finder | `create_lead`, `create_leads_bulk`, `update_lead`, `add_do_not_contact` + shared |
 | `jordan` | Outreach | `screen_lead`, `create_draft`, `submit_draft_batch`, `log_send`, `log_reply`, `update_lead`, `add_do_not_contact` + shared |
 | `quinn` | Closer | `add_discovery_note`, `create_deal`, `create_proposal`, `sign_deal`, `log_reply`, `update_lead`, `add_do_not_contact` + shared |
 | `dana` | Delivery | `create_scope`, `create_project`, `update_milestone`, `update_deliverable`, `record_payment`, `complete_project`, `record_testimonial`, `add_referral`, `start_care_plan`, `log_care_hours`, `add_lesson`, `update_lead`, `add_do_not_contact` + shared |
 | everyone | shared | `advance_stage` (within role), `raise_escalation`, `get_lead_context`, `capacity`, `check_do_not_contact`, `find_duplicate_leads`, `quote_deal`, `dashboard_metrics`, `current_agent` |
-| admins only | | `record_approval`, `update_escalation` |
+| owner only | | `record_approval`, catalogue writes, team-directory edits, marking a signed client lost, deleting a lead |
+| admins | | `update_escalation` for routine items. Sending one to the owner (`escalate_to_owner`) assigns Marvin. Resolving a `with_owner` escalation is Marvin only |
 
-Admins = Letty, Marvin, Top G. Every action is logged with the caller's name, so **each agent must use
-its own login**.
+Admins = Marvin and Top G. The owner is Marvin alone. Every action is logged with the caller's name, so **each agent must use
+its own login**. No agent approves on Marvin's behalf.
 
 ---
 
@@ -146,7 +147,7 @@ found → screened → draft_ready → approved → sent → replied → discove
 | `found` | Hunter | `create_lead` | (new leads) |
 | `screened` | Jordan | `screen_lead` (pass) | `found` |
 | `draft_ready` | Jordan | `create_draft` | `found`, `screened` |
-| `approved` | Letty / Marvin (Top G records it) | `record_approval` | `found`, `screened`, `draft_ready` |
+| `approved` | Marvin | `record_approval` | `found`, `screened`, `draft_ready` |
 | `sent` | Jordan | `log_send` (approved draft only) | `approved` |
 | `replied` | Jordan / Quinn | `log_reply` | `sent` |
 | `discovery` | Quinn | `add_discovery_note` (auto) or `advance_stage` | `sent`, `replied` |
@@ -155,10 +156,10 @@ found → screened → draft_ready → approved → sent → replied → discove
 | `in_delivery` | Dana | `create_project` (needs a project) | `signed` |
 | `delivered` | Dana | `complete_project` | `in_delivery` |
 | `care_plan` | Dana | `start_care_plan` | `in_delivery`, `delivered` |
-| `lost` | anyone | `advance_stage`, `screen_lead` (fail) | any stage **before** `signed` |
+| `lost` | anyone before signing; **Marvin only** once the lead is `signed` or later | `advance_stage`, `screen_lead` (fail) | any stage **before** `signed`. From `signed` / `in_delivery` / `delivered` / `care_plan`, only Marvin |
 | `do_not_contact` | anyone | `add_do_not_contact`, `advance_stage` | any stage |
 
-Leads never move backwards, and `lost` / `do_not_contact` leads can't be revived, except by an admin.
+Leads never move backwards, and `lost` / `do_not_contact` leads can't be revived, except by Marvin or Top G. Only Marvin can mark a signed client lost, or delete a lead.
 Workflow functions only move a lead **forward** (a late reply never drags a client back).
 Every manual move needs a reason and is recorded in `stage_changes`.
 
@@ -174,7 +175,8 @@ Every manual move needs a reason and is recorded in `stage_changes`.
 | discovery source (`p_source`) | `call`, `meeting`, `whatsapp`, `email`, `instagram`, `form`, `website`, `other` |
 | payment plan | `50_50`, `40_30_30` |
 | escalation severity | `low`, `medium`, `high`, `urgent` |
-| escalation action | `review`, `escalate_to_letty`, `resolve`, `dismiss` |
+| escalation action | `review`, `escalate_to_owner`, `resolve`, `dismiss`. `escalate_to_letty` is still accepted and does the same thing as `escalate_to_owner` (assigns Marvin, status `with_owner`) |
+| escalation status | `open`, `in_review`, `with_owner`, `resolved`, `dismissed`. `with_letty` was renamed to `with_owner` |
 | do-not-contact kind | `business`, `email`, `phone`, `domain`, `instagram` |
 | milestone status | `pending`, `in_progress`, `done`, `slipped` |
 | deliverable status | `pending`, `in_progress`, `done`, `blocked` |
@@ -216,11 +218,19 @@ Returns your agent code (`"top_g"`, `"hunter"`, …). Use it to test the connect
 One-call overview:
 ```json
 { "mrr_usd": 0, "committed_mrr_usd": 0, "pipeline_value_usd": 0, "win_rate": null, "avg_deal_usd": null,
-  "stage_counts": { "found": 12 }, "open_escalations": 0, "escalations_for_letty": 0,
-  "batches_awaiting_letty": 0, "drafts_awaiting_letty": 0, "slipping_milestones": 0,
+  "stage_counts": { "found": 12 }, "open_escalations": 0,
+  "escalations_for_owner": 0, "escalations_for_marvin": 0,
+  "batches_awaiting_owner": 0, "batches_awaiting_marvin": 0,
+  "drafts_awaiting_owner": 0, "drafts_awaiting_marvin": 0,
+  "escalations_for_letty": 0, "batches_awaiting_letty": 0, "drafts_awaiting_letty": 0,
+  "slipping_milestones": 0,
   "capacity": { "month": "2026-11", "limit": 4, "used": 0, "remaining": 4 }, "renewals_next_30d": 0 }
 ```
-`mrr_usd` / `committed_mrr_usd` are `null` unless you are an admin or Dana.
+`mrr_usd` / `committed_mrr_usd` are `null` unless you are an admin (Marvin or Top G) or Dana.
+
+`escalations_for_owner`, `batches_awaiting_owner` and `drafts_awaiting_owner` are the names to use.
+`escalations_for_marvin`, `batches_awaiting_marvin` and `drafts_awaiting_marvin` are the same counts.
+`escalations_for_letty`, `batches_awaiting_letty` and `drafts_awaiting_letty` are deprecated aliases of those same counts, kept so existing agents do not break. They no longer mean "waiting on Letty". `open_escalations` counts `open`, `in_review` and `with_owner`.
 
 #### `get_lead_context(p_lead_id uuid)`
 Everything about one lead: `lead` (with `code` "SQ-…"), `company`, `contact`, `stage_history`, `drafts`,
@@ -235,7 +245,7 @@ at an allowed previous stage (table in §4). Moving to `lost` also marks the lea
 ```
 
 #### `raise_escalation(p_title text, p_detail text?, p_severity text = 'medium', p_lead_id uuid?, p_project_id uuid?, p_proposed_action text?)`
-Raise a problem for Top G (Top G's own escalations go straight to Letty). Always propose an action.
+Raise a problem for Top G (Top G's own escalations go straight to Marvin, status `with_owner`). Always propose an action.
 ```json
 { "p_title": "Prospect asks for 15% discount", "p_severity": "medium", "p_lead_id": "…",
   "p_proposed_action": "Offer the 40/30/30 plan instead of a discount" }
@@ -333,7 +343,7 @@ Refused for lost/do-not-contact leads and contacts on the do-not-contact list. C
 → `{ "status": "ready", "draft_id": "…" }`
 
 #### `submit_draft_batch(p_draft_ids uuid[], p_note text?)`
-Sends drafts (status `draft`/`ready`) to Letty for approval. Drafts are locked from now on.
+Sends drafts (status `draft`/`ready`) to Marvin for approval. Drafts are locked from now on.
 → `{ "status": "pending", "batch_id": "…", "batch_ref": 3, "drafts": 5 }`
 
 #### `log_send(p_draft_id uuid, p_external_ref text?, p_sent_at timestamp = now)`
@@ -352,17 +362,19 @@ Adds a do-not-contact entry, moves **every matching lead** (plus `p_lead_id`) to
 cancels their unsent drafts.
 → `{ "status": "added", "id": "…", "leads_blocked": 1, "drafts_cancelled": 2 }`
 
-### 6.4 Letty / Marvin / Top G — approvals and escalations (admins only)
+### 6.4 Marvin — approvals. Top G — routine escalations
 
 #### `record_approval(p_batch_id uuid, p_approved_ids uuid[]?, p_rejected_ids uuid[] = [], p_note text?, p_feedback jsonb = {})`
-Records the human decision on a pending batch. Leave out `p_approved_ids` to approve everything not
-rejected. `p_feedback`: `{ "<draft_id>": "Shorter, mention the bakery photos" }`. Top G may only record a
-decision Letty/Marvin actually made.
-→ `{ "status": "decided", "batch_ref": 3, "approved": 4, "rejected": 1, "decided_by": "top_g" }`
+**Marvin only.** Records his decision on a pending batch. Leave out `p_approved_ids` to approve everything not
+rejected. `p_feedback`: `{ "<draft_id>": "Shorter, mention the bakery photos" }`. Top G and Letty are refused.
+`decided_by` and `approved_by` are the caller (`marvin`).
+→ `{ "status": "decided", "batch_ref": 3, "approved": 4, "rejected": 1, "decided_by": "marvin" }`
 
 #### `update_escalation(p_escalation_id uuid, p_action text, p_notes text?)`
-`review` (take it) · `escalate_to_letty` (needs a human) · `resolve` (`p_notes` required) · `dismiss`.
-→ `{ "status": "resolve", "escalation_id": "…" }`
+`review` (take it) · `escalate_to_owner` (needs Marvin; status becomes `with_owner`, `assigned_to` = `marvin`) · `resolve` (`p_notes` required) · `dismiss`.
+`escalate_to_letty` is accepted and mapped to `escalate_to_owner`; the returned `status` is `escalate_to_owner`.
+Top G may review, resolve and dismiss routine (`open` / `in_review`) escalations. He cannot resolve or dismiss one that is `with_owner`. Letty cannot call this.
+→ `{ "status": "escalate_to_owner", "escalation_id": "…" }`
 
 ### 6.5 Quinn — discovery, deals, proposals
 
@@ -453,8 +465,8 @@ Lessons must be anonymous: no client/contact names, emails, phone numbers, URLs 
 5. Finish with a report: processed, created (codes), duplicates (matching codes), do-not-contact, errors.
 For a single lead, `create_lead` works the same way. Don't screen or message imported leads; Jordan screens them next.
 
-### 7.2 Outreach (Jordan → Letty → Jordan)
-`screen_lead` → `create_draft` → `submit_draft_batch` → *wait for Letty/Marvin's decision* →
+### 7.2 Outreach (Jordan → Marvin → Jordan)
+`screen_lead` → `create_draft` → `submit_draft_batch` → *wait for Marvin's decision* →
 re-read draft status → send in WhatsApp/email/Instagram → `log_send` → later `log_reply`.
 
 ### 7.3 Closing (Quinn)

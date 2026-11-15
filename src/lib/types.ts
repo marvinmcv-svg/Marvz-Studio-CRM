@@ -4,8 +4,10 @@ export type Stage =
   | "lost" | "do_not_contact";
 
 export type AgentCode = "letty" | "marvin" | "top_g" | "hunter" | "jordan" | "quinn" | "dana";
-/** Admins: full access (mirrors public.is_admin()). */
-export const ADMINS: readonly string[] = ["letty", "marvin", "top_g"];
+/** Owner: the only approver (mirrors public.is_owner()). */
+export const OWNERS: readonly string[] = ["marvin"];
+/** Admins: coordination access (mirrors public.is_admin()). Not approvers. */
+export const ADMINS: readonly string[] = ["marvin", "top_g"];
 export type Channel = "whatsapp" | "email" | "instagram";
 
 export interface Agent {
@@ -74,7 +76,7 @@ export interface Payment { id: string; deal_id: string; project_id: string | nul
 export interface Escalation {
   id: string; ref: number; lead_id: string | null; project_id: string | null; raised_by: AgentCode; title: string;
   detail: string | null; proposed_action: string | null; severity: "low" | "medium" | "high" | "urgent";
-  status: "open" | "in_review" | "with_letty" | "resolved" | "dismissed"; assigned_to: AgentCode;
+  status: "open" | "in_review" | "with_owner" | "with_letty" | "resolved" | "dismissed"; assigned_to: AgentCode;
   top_g_notes: string | null; resolution_notes: string | null; resolved_by: AgentCode | null; resolved_at: string | null; created_at: string;
 }
 export interface Activity { id: number; agent_code: AgentCode | null; action: string; entity_type: string | null; entity_id: string | null; lead_id: string | null; summary: string; payload: Record<string, unknown>; created_at: string }

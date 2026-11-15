@@ -26,7 +26,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
       badges={{
         approvals: t.approval_batches.filter((b) => b.status === "pending").length,
         escalations: open.length,
-        lettyEscalations: open.filter((e) => e.status === "with_letty").length,
+        ownerEscalations: open.filter((e) => e.status === "with_owner" || e.status === "with_letty").length,
         slipping: t.milestones.filter(isSlipping).length,
       }}
     >
