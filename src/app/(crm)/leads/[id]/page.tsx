@@ -2,11 +2,14 @@ import { ArrowLeft, Calculator, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ActivityFeed } from "@/components/activity-feed";
+import { LeadQualityPanel, type RelatedLead } from "@/components/lead-quality";
 import { StageSelect } from "@/components/stage-move";
+import { DraftHoldButton } from "@/components/draft-hold";
 import { AgentAvatar, Chip, Empty, Field, StageChip, StatusChip, Tabs } from "@/components/ui";
 import { stageMeta } from "@/lib/constants";
 import { getLeadHistory, getMe, getTables } from "@/lib/data";
 import { dateTime, money, relTime, shortDate, titleCase } from "@/lib/format";
+import { frozenLeadIds, outreachBlockers } from "@/lib/quality";
 
 export default async function LeadPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const { id } = await params;
@@ -15,6 +18,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const t = await getTables(
     "leads", "companies", "contacts", "agents", "outreach_drafts", "discovery_notes",
     "deals", "deal_items", "proposals", "projects", "escalations", "catalogue_packages", "catalogue_addons", "approval_batches",
+    "lead_relations", "import_batches",
   );
   const lead = t.leads.find((l) => l.id === id);
   if (!lead) notFound();
@@ -32,6 +36,18 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
   const proposals = t.proposals.filter((p) => p.lead_id === id);
   const project = t.projects.find((p) => p.lead_id === id);
   const escalations = t.escalations.filter((e) => e.lead_id === id);
+  const frozen = frozenLeadIds(t.lead_relations);
+  const blockers = outreachBlockers(lead, frozen);
+  const leadById = new Map(t.leads.map((l) => [l.id, l]));
+  const related: RelatedLead[] = t.lead_relations.filter((r) => r.lead_a === id).map((r) => {
+    const other = leadById.get(r.lead_b);
+    return { id: r.lead_b, code: other ? `SQ-${other.ref}` : "", name: t.companies.find((c) => c.id === other?.company_id)?.name ?? "Deleted lead",
+      relation: r.relation, status: r.status, note: r.note, clearedNote: r.cleared_note };
+  });
+  const otherLeads = t.leads.filter((l) => l.id !== id)
+    .map((l) => ({ id: l.id, label: `${t.companies.find((c) => c.id === l.company_id)?.name ?? "?"} · SQ-${l.ref}` }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+  const importBatch = t.import_batches.find((b) => b.id === lead.import_batch_id) ?? null;
 
   const base = `/leads/${id}`;
   const tabs = [
@@ -85,6 +101,8 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
           <Field label="Channel">{lead.channel ? titleCase(lead.channel) : null}</Field>
           <Field label="Languages">{lead.languages.length ? lead.languages.join(", ").toUpperCase() : null}</Field>
         </div>
+        <LeadQualityPanel lead={lead} company={company} contact={contact ?? null} blockers={blockers} related={related}
+          importBatch={importBatch} me={{ code: me?.code ?? "", demo: !!me?.demo }} otherLeads={otherLeads} />
         <div className="border-t border-line px-4 py-3">
           <div className="card-t mb-1">Qualification</div>
           <Field label="Industry">{lead.industry}</Field>
@@ -149,14 +167,18 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
                       <div className="flex items-center gap-2">
                         <StatusChip status={d.status} /><Chip>{d.channel}</Chip><Chip>{d.language.toUpperCase()}</Chip>
                         {b && <span className="text-[12px] text-ink-3">Batch #{b.ref}</span>}
+                        {d.on_hold && <Chip tone="amber" dot>On hold</Chip>}
                       </div>
                       <span className="text-[12px] text-ink-3">{d.sent_at ? `sent ${relTime(d.sent_at)}` : relTime(d.created_at)}</span>
                     </div>
                     <div className="px-4 py-3">
+                      <div className="mb-2 text-[12.5px] text-ink-3">To: <span className="font-medium text-ink">{d.recipient ?? "— no recipient (cannot be batched)"}</span>{d.recipient_kind && ` · ${d.recipient_kind.replace("_", " ")}`}</div>
+                      {d.on_hold && <p className="mb-2 rounded-xl bg-amber-400/10 px-3 py-2 text-[12.5px] text-amber-300">On hold: {d.hold_reason}</p>}
                       {d.subject && <div className="mb-1 font-medium">{d.subject}</div>}
                       <p className="whitespace-pre-wrap text-ink-2">{d.body}</p>
                       {d.personalisation && <p className="mt-2 text-[12px] text-ink-3">Why it fits: {d.personalisation}</p>}
-                      {d.reviewer_note && <p className="mt-2 rounded-lg bg-panel-3 px-3 py-2 text-[12px] text-ink-2">Letty: {d.reviewer_note}</p>}
+                      {d.reviewer_note && <p className="mt-2 rounded-lg bg-panel-3 px-3 py-2 text-[12px] text-ink-2">Reviewer: {d.reviewer_note}</p>}
+                      {(d.status === "draft" || d.status === "ready") && <div className="mt-3"><DraftHoldButton draftId={d.id} onHold={!!d.on_hold} /></div>}
                     </div>
                   </article>
                 );

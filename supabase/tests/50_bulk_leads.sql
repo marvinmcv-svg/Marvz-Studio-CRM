@@ -8,7 +8,7 @@ do $$
 declare r jsonb;
 begin
   r := public.create_leads_bulk($j$[
-    {"business": "Bulk Bakery One", "contact_name": "Ana Pérez", "phone": "+591 70000001", "city": "Santa Cruz",
+    {"business": "Bulk Bakery One", "contact_name": "Ana Pérez", "phone": "+591 70000001", "city": "Cochabamba",
      "country": "BO", "industry": "Bakery", "service_interest": ["presence"], "languages": "es, en",
      "source": "Google Maps", "channel": "WhatsApp"},
     {"business": "Bulk Gym Two", "email": "hello@bulkgymtwo.example", "market": "MX", "budget_band": "5-10k"},
@@ -16,9 +16,20 @@ begin
     {"business": "Ferreteria Central"},
     {"business": "Bad Channel Co", "channel": "fax"},
     {"contact_name": "No business name"},
-    "not an object"
-  ]$j$);
-  perform tests.eq((r->>'total')::int, 7, 'bulk: all rows processed');
+    "not an object",
+    {"business": "Cruceño Grill", "city": "Santa Cruz de la Sierra"},
+    {"business": "Equipetrol Spa", "city": "Santa Cruz", "country": "BO"}
+  ]$j$, p_source_file => 'hunter-2026-11-15.csv');
+  perform tests.eq((r->>'total')::int, 9, 'bulk: all rows processed');
+  perform tests.eq((r->>'excluded_region')::int, 2, 'bulk: Santa Cruz de la Sierra rows are never stored');
+  perform tests.eq((select count(*) from public.companies where name in ('Cruceño Grill', 'Equipetrol Spa')), 0::bigint,
+                   'bulk: nothing about excluded rows is stored');
+  perform tests.eq((select rows_total from public.import_batches where id = (r->>'import_batch_id')::uuid), 9,
+                   'bulk: import batch record keeps the row count');
+  perform tests.eq((select source_file from public.import_batches where id = (r->>'import_batch_id')::uuid),
+                   'hunter-2026-11-15.csv', 'bulk: import batch records the source file');
+  perform tests.eq((select import_batch_id::text from public.leads where id = (r->'results'->0->>'lead_id')::uuid),
+                   r->>'import_batch_id', 'bulk: leads are stamped with their import batch');
   perform tests.eq((r->>'created')::int, 2, 'bulk: two leads created');
   perform tests.eq((r->>'duplicates')::int, 1, 'bulk: duplicate inside the same batch detected');
   perform tests.eq((r->>'do_not_contact')::int, 1, 'bulk: do-not-contact row skipped');

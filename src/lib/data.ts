@@ -80,7 +80,7 @@ export async function getTables<K extends TableName>(...names: K[]): Promise<Pic
     const all = demoTables();
     const out = {} as Pick<Tables, K>;
     for (const n of names) {
-      const rows = [...(all[n] as unknown[])] as Tables[K];
+      const rows = [...((all[n] as unknown[] | undefined) ?? [])] as Tables[K];
       if (ORDER[n]) (rows as { created_at: string }[]).sort((a, b) => b.created_at.localeCompare(a.created_at));
       out[n] = rows;
     }
@@ -113,7 +113,7 @@ export type Me = { code: AgentCode; name: string; email: string | null; demo: bo
 export const getMe = cache(async (): Promise<Me | null> => {
   if (!isLive) {
     if (!demoAllowed()) throw new Error(NOT_CONFIGURED);
-    return { code: "letty", name: "Letty", email: null, demo: true };
+    return { code: "marvin", name: "Marvin", email: null, demo: true };
   }
   const sb = await supabaseServer();
   const { data: { user } } = await sb.auth.getUser();

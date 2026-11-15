@@ -1,6 +1,7 @@
 import type { Stage } from "./types";
 
 export const STAGES: { key: Stage; label: string; tone: Tone; owner: string }[] = [
+  { key: "held", label: "Held", tone: "amber", owner: "hunter" },
   { key: "found", label: "Found", tone: "slate", owner: "hunter" },
   { key: "screened", label: "Screened", tone: "slate", owner: "jordan" },
   { key: "draft_ready", label: "Draft ready", tone: "blue", owner: "jordan" },
@@ -31,8 +32,8 @@ export const ALLOWED_TARGETS: Record<string, Stage[] | "all"> = {
   letty: "all",
   marvin: "all",
   top_g: "all",
-  hunter: ["found", "lost", "do_not_contact"],
-  jordan: ["found", "screened", "draft_ready", "sent", "replied", "lost", "do_not_contact"],
+  hunter: ["held", "found", "lost", "do_not_contact"],
+  jordan: ["held", "found", "screened", "draft_ready", "sent", "replied", "lost", "do_not_contact"],
   quinn: ["replied", "discovery", "proposal", "signed", "lost", "do_not_contact"],
   dana: ["signed", "in_delivery", "delivered", "care_plan", "lost", "do_not_contact"],
 };
@@ -43,7 +44,8 @@ export const ALLOWED_TARGETS: Record<string, Stage[] | "all"> = {
  * UI hide moves that would be refused. A unit test keeps the two in sync.
  */
 export const STAGE_PREDECESSORS: Record<Stage, Stage[]> = {
-  found: [],
+  held: ["found", "screened"],
+  found: ["held"],
   screened: ["found"],
   draft_ready: ["found", "screened"],
   approved: ["found", "screened", "draft_ready"],
@@ -55,8 +57,8 @@ export const STAGE_PREDECESSORS: Record<Stage, Stage[]> = {
   in_delivery: ["signed"],
   delivered: ["in_delivery"],
   care_plan: ["in_delivery", "delivered"],
-  lost: ["found", "screened", "draft_ready", "approved", "sent", "replied", "discovery", "proposal"],
-  do_not_contact: ["found", "screened", "draft_ready", "approved", "sent", "replied", "discovery", "proposal",
+  lost: ["held", "found", "screened", "draft_ready", "approved", "sent", "replied", "discovery", "proposal"],
+  do_not_contact: ["held", "found", "screened", "draft_ready", "approved", "sent", "replied", "discovery", "proposal",
     "signed", "in_delivery", "delivered", "care_plan", "lost"],
 };
 

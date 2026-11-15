@@ -41,6 +41,9 @@ export interface NewLeadInput {
   industry?: string; city?: string; country?: string; market: string; service_interest: string[];
   budget_band: string; timeline?: string; languages: string[]; source?: string; channel?: string;
   portfolio_case?: string; notes?: string; force?: boolean;
+  street?: string; region?: string; postcode?: string; source_key?: string;
+  hold?: boolean; hold_reason?: string;
+  domain_status?: string; domain_proof_url?: string; website_problem_type?: string;
 }
 
 export async function createLead(input: NewLeadInput) {
@@ -55,18 +58,27 @@ export async function createLead(input: NewLeadInput) {
       p_timeline: blank(input.timeline), p_languages: input.languages, p_source: blank(input.source),
       p_channel: blank(input.channel), p_portfolio_case: blank(input.portfolio_case), p_notes: blank(input.notes),
       p_force: !!input.force,
+      p_street: blank(input.street), p_region: blank(input.region), p_postcode: blank(input.postcode),
+      p_source_key: blank(input.source_key), p_hold: !!input.hold, p_hold_reason: input.hold ? blank(input.hold_reason) : null,
+      p_details: Object.fromEntries(Object.entries({
+        domain_status: blank(input.domain_status), domain_proof_url: blank(input.domain_proof_url),
+        website_problem_type: blank(input.website_problem_type),
+      }).filter(([, v]) => v)),
     },
   );
 }
 
-export async function checkDuplicates(input: { business?: string; email?: string; phone?: string; website?: string; instagram?: string }) {
+export async function checkDuplicates(input: { business?: string; email?: string; phone?: string; website?: string; instagram?: string; street?: string; city?: string }) {
   if (!isLive) return { ok: true as const, data: { duplicates: [], dnc: [] } };
   const sb = await supabaseServer();
   const args = {
     p_business: input.business || null, p_email: input.email || null, p_phone: input.phone || null,
     p_website: input.website || null, p_instagram: input.instagram || null,
   };
-  const [d, n] = await Promise.all([sb.rpc("find_duplicate_leads", args), sb.rpc("check_do_not_contact", args)]);
+  const [d, n] = await Promise.all([
+    sb.rpc("find_duplicate_leads", { ...args, p_street: input.street || null, p_city: input.city || null }),
+    sb.rpc("check_do_not_contact", args),
+  ]);
   if (d.error || n.error) return { ok: false as const, error: (d.error ?? n.error)!.message };
   return { ok: true as const, data: { duplicates: d.data ?? [], dnc: n.data ?? [] } };
 }
@@ -83,4 +95,40 @@ export async function createDeal(input: {
 
 export async function addDoNotContact(kind: string, value: string, reason: string) {
   return rpc("add_do_not_contact", { p_kind: kind, p_value: value, p_reason: reason });
+}
+
+// ---- lead quality & owner controls (migration 20261115000010) ------------------------------
+
+export async function deleteLead(leadId: string, confirm: string, reason: string) {
+  return rpc<{ status: string; code: string }>("delete_lead", { p_lead_id: leadId, p_confirm: confirm, p_reason: reason });
+}
+
+export async function setManualCheck(leadId: string, result: "PASS" | "FAIL" | "PENDING", note: string) {
+  return rpc("set_manual_check", { p_lead_id: leadId, p_result: result, p_note: note || null });
+}
+
+export async function setLeadHold(leadId: string, onHold: boolean, reason: string) {
+  return rpc("set_lead_hold", { p_lead_id: leadId, p_on_hold: onHold, p_reason: reason || null });
+}
+
+export async function setDraftHold(draftId: string, onHold: boolean, reason: string) {
+  return rpc("set_draft_hold", { p_draft_id: draftId, p_on_hold: onHold, p_reason: reason || null });
+}
+
+export async function linkLeads(leadA: string, leadB: string, relation: "duplicate" | "sister" | "rename", note: string) {
+  return rpc("link_leads", { p_lead_a: leadA, p_lead_b: leadB, p_relation: relation, p_note: note || null });
+}
+
+export async function clearLeadLink(leadA: string, leadB: string, note: string) {
+  return rpc("clear_lead_link", { p_lead_a: leadA, p_lead_b: leadB, p_note: note });
+}
+
+export async function updateLeadEvidence(leadId: string, fields: Record<string, string | null>, reason: string) {
+  const clean = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null && v !== ""));
+  return rpc("update_lead", { p_lead_id: leadId, p_fields: clean, p_reason: reason || null });
+}
+
+export async function updateCompanyDetails(companyId: string, fields: Record<string, string | number | null>, reason: string) {
+  const clean = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== null && v !== ""));
+  return rpc("update_company_details", { p_company_id: companyId, p_fields: clean, p_reason: reason || null });
 }

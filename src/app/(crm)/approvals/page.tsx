@@ -24,6 +24,7 @@ export default async function ApprovalsPage() {
     return {
       id: d.id, leadId: d.lead_id, business: company.get(l?.company_id ?? "")?.name ?? "—", code: `SQ-${l?.ref}`,
       channel: d.channel, language: d.language, subject: d.subject, body: d.body, personalisation: d.personalisation,
+      recipient: d.recipient ?? null, recipientKind: d.recipient_kind ?? null,
     };
   };
 
@@ -82,8 +83,9 @@ export default async function ApprovalsPage() {
                 return (
                   <li key={d.id} className="flex items-center gap-2 px-4 py-2">
                     <StatusChip status={d.status} />
+                    {d.on_hold && <Chip tone="amber" dot>on hold</Chip>}
                     <Link href={`/leads/${d.lead_id}`} className="hover:text-accent-2">{x.business}</Link>
-                    <span className="min-w-0 flex-1 truncate text-[12px] text-ink-3">{d.body}</span>
+                    <span className="min-w-0 flex-1 truncate text-[12px] text-ink-3">→ {d.recipient ?? "no recipient"} · {d.body}</span>
                   </li>
                 );
               })}

@@ -126,7 +126,12 @@ begin
    where l.company_id = (select id from public.companies where name = 'Test Barber Club');
   r := public.screen_lead(v_lead, true, 80, 'Good fit');
   perform tests.eq(r->>'status', 'screened', 'jordan screens a lead');
-  r := public.create_draft(v_lead, 'Hi! Quick idea for your site.', 'email', 'Idea', 'en');
+  -- quality gates (migration 10): verified domain + Marvin's PASS before drafting
+  perform public.update_lead(v_lead, '{"domain_status": "VERIFIED", "domain_proof_url": "https://barber.test.example"}');
+  perform set_config('request.jwt.claims', json_build_object('sub', (select auth_user_id from public.agents where code = 'marvin'), 'role', 'authenticated')::text, false);
+  perform public.set_manual_check(v_lead, 'PASS');
+  perform set_config('request.jwt.claims', json_build_object('sub', (select auth_user_id from public.agents where code = 'jordan'), 'role', 'authenticated')::text, false);
+  r := public.create_draft(v_lead, 'Hi! Quick idea for your site.', 'email', 'Idea', 'en', p_recipient => 'barber@test.example');
   v_draft := (r->>'draft_id')::uuid;
   perform tests.eq((select stage::text from public.leads where id = v_lead), 'draft_ready', 'lead moves to draft_ready');
 

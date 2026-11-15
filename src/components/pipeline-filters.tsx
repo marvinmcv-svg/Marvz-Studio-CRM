@@ -7,7 +7,9 @@ import { useEffect, useState, useTransition } from "react";
 
 type Opt = { value: string; label: string };
 
-export function PipelineFilters({ options }: { options: Record<"stage" | "industry" | "service" | "market" | "agent", Opt[]> }) {
+export type FilterDef = { key: string; any: string; label: string; values: Opt[] };
+
+export function PipelineFilters({ filters }: { filters: FilterDef[] }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -28,7 +30,7 @@ export function PipelineFilters({ options }: { options: Record<"stage" | "indust
   }, [q]);
 
   const view = params.get("view") ?? "board";
-  const active = (["stage", "industry", "service", "market", "agent"] as const).filter((k) => params.get(k));
+  const active = filters.map((f) => f.key).filter((k) => params.get(k));
 
   return (
     <div className="flex flex-wrap items-center gap-2 px-4 pb-3 pt-1 md:px-8">
@@ -38,12 +40,12 @@ export function PipelineFilters({ options }: { options: Record<"stage" | "indust
       </div>
       {/* on phones the filters scroll sideways in one row instead of stacking */}
       <div className="-mx-4 flex w-[calc(100%+2rem)] gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0">
-        {(Object.keys(options) as (keyof typeof options)[]).map((k) => (
-          <select key={k} value={params.get(k) ?? ""} onChange={(e) => set(k, e.target.value || null)}
-            aria-label={k === "agent" ? "Owner" : k}
-            className={clsx("input w-auto max-w-[170px] shrink-0 rounded-full pr-8 capitalize", params.get(k) && "border-accent text-accent")}>
-            <option value="">{k === "agent" ? "Any owner" : `Any ${k}`}</option>
-            {options[k].map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        {filters.map((f) => (
+          <select key={f.key} value={params.get(f.key) ?? ""} onChange={(e) => set(f.key, e.target.value || null)}
+            aria-label={f.label}
+            className={clsx("input w-auto max-w-[190px] shrink-0 rounded-full pr-8", params.get(f.key) && "border-accent text-accent")}>
+            <option value="">{f.any}</option>
+            {f.values.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         ))}
       </div>

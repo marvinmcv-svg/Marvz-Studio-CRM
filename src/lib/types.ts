@@ -1,5 +1,5 @@
 export type Stage =
-  | "found" | "screened" | "draft_ready" | "approved" | "sent" | "replied"
+  | "held" | "found" | "screened" | "draft_ready" | "approved" | "sent" | "replied"
   | "discovery" | "proposal" | "signed" | "in_delivery" | "delivered" | "care_plan"
   | "lost" | "do_not_contact";
 
@@ -30,10 +30,22 @@ export interface Company {
   id: string; name: string; website: string | null; instagram: string | null; industry: string | null;
   city: string | null; country: string | null; market_code: string | null; notes: string | null;
   created_by: string | null; created_at: string;
+  // address (#2) and sourced contact/reputation fields (#11, #12) — optional in older demo data
+  street?: string | null; region?: string | null; postcode?: string | null;
+  contact_form_url?: string | null; contact_form_source_url?: string | null; contact_form_checked_at?: string | null;
+  instagram_source_url?: string | null; instagram_checked_at?: string | null;
+  facebook_url?: string | null; tiktok_url?: string | null; linkedin_url?: string | null;
+  socials_source_url?: string | null; socials_checked_at?: string | null;
+  whatsapp?: string | null; whatsapp_source_url?: string | null; whatsapp_checked_at?: string | null;
+  telegram?: string | null; telegram_source_url?: string | null; telegram_checked_at?: string | null;
+  review_count?: number | null; rating?: number | null; rating_source?: string | null; rating_source_url?: string | null; rating_checked_at?: string | null;
+  site_language?: string | null; site_language_source_url?: string | null; site_language_checked_at?: string | null;
+  owner_name?: string | null; owner_role?: string | null; owner_source_url?: string | null; owner_checked_at?: string | null;
 }
 export interface Contact {
   id: string; company_id: string; full_name: string; role: string | null; email: string | null;
   phone: string | null; languages: string[]; created_at: string;
+  email_source_url?: string | null; email_checked_at?: string | null; phone_source_url?: string | null; phone_checked_at?: string | null;
 }
 export interface Lead {
   id: string; ref: number; company_id: string; contact_id: string | null; stage: Stage;
@@ -42,6 +54,24 @@ export interface Lead {
   portfolio_case: string | null; fit_score: number | null; screen_notes: string | null;
   owner_agent: AgentCode | null; next_action: string | null; next_action_at: string | null;
   lost_reason: string | null; stage_changed_at: string; created_by: AgentCode | null; created_at: string; updated_at: string;
+  // lead quality (#3 #5 #7 #8 #10)
+  on_hold?: boolean; hold_reason?: string | null; held_at?: string | null; held_by?: AgentCode | null;
+  manual_check?: ManualCheck; manual_check_note?: string | null; manual_check_by?: AgentCode | null; manual_check_at?: string | null;
+  domain_status?: DomainStatus; domain_proof_url?: string | null; website_problem_type?: ProblemType | null;
+  operating_evidence_date?: string | null; evidence_checked_at?: string | null; phone_source_url?: string | null;
+  last_verified_at?: string | null; import_batch_id?: string | null; source_key?: string | null;
+}
+export type ManualCheck = "PASS" | "FAIL" | "PENDING";
+export type DomainStatus = "VERIFIED" | "NSC" | "UNVERIFIED";
+export type ProblemType = "outdated" | "non_mobile" | "no_site";
+export interface LeadRelation {
+  id: string; group_id: string; lead_a: string; lead_b: string; relation: "duplicate" | "sister" | "rename";
+  status: "frozen" | "cleared"; note: string | null; created_by: AgentCode | null; created_at: string;
+  cleared_by: AgentCode | null; cleared_at: string | null; cleared_note: string | null;
+}
+export interface ImportBatch {
+  id: string; ref: number; source_file: string | null; note: string | null; rows_total: number;
+  rows_created: number; rows_skipped: number; created_by: AgentCode | null; created_at: string;
 }
 export interface StageChange { id: number; lead_id: string; from_stage: Stage | null; to_stage: Stage; agent_code: AgentCode | null; reason: string | null; created_at: string }
 export interface Batch { id: string; ref: number; status: "pending" | "approved" | "partially_approved" | "rejected"; submitted_by: AgentCode; submitted_at: string; decided_by: string | null; decided_at: string | null; note: string | null }
@@ -50,6 +80,8 @@ export interface Draft {
   personalisation: string | null; status: "draft" | "ready" | "in_batch" | "approved" | "rejected" | "sent";
   batch_id: string | null; reviewer_note: string | null; created_by: AgentCode | null; approved_at: string | null;
   sent_at: string | null; external_ref: string | null; created_at: string;
+  recipient?: string | null; recipient_kind?: "email" | "handle" | "form_url" | "phone" | null;
+  on_hold?: boolean; hold_reason?: string | null;
 }
 export interface DiscoveryNote { id: string; lead_id: string; topic: string; question: string | null; answer: string; source: string; source_ref: string | null; recorded_by: AgentCode | null; created_at: string }
 export interface Deal {
@@ -94,5 +126,6 @@ export interface Tables {
   milestones: Milestone[]; deliverables: Deliverable[]; payments: Payment[]; escalations: Escalation[];
   activity_log: Activity[]; lessons: Lesson[]; testimonials: Testimonial[]; referrals: Referral[];
   care_subscriptions: CareSubscription[]; care_hours_log: CareHours[]; do_not_contact: DoNotContact[];
+  lead_relations: LeadRelation[]; import_batches: ImportBatch[];
 }
 export type TableName = keyof Tables;

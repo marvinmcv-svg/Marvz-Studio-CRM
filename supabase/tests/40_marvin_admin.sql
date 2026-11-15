@@ -14,6 +14,7 @@ begin
   perform tests.eq(n, 1, 'marvin can edit the catalogue');
   r := public.create_lead(p_business => 'Marvin Admin Test Studio', p_market => 'US', p_source => 'test');
   perform tests.eq(r->>'status', 'created', 'marvin can create leads');
+  perform public.set_manual_check((r->>'lead_id')::uuid, 'PASS', 'checked');
   perform public.advance_stage((r->>'lead_id')::uuid, 'discovery', 'Admin correction test');
   perform tests.eq((select stage::text from public.leads where id = (r->>'lead_id')::uuid), 'discovery',
                    'marvin can make any stage correction');
@@ -23,15 +24,20 @@ end $$;
 reset role;
 
 -- Marvin decides an approval batch under his own name
+select tests.login('marvin');
+set role authenticated;
+select set_config('tests.mlead', (public.create_lead(p_business => 'Approval Path Florist', p_channel => 'email',
+  p_email => 'hello@approvalpath.example', p_city => 'Lima', p_country => 'PE',
+  p_details => '{"domain_status": "VERIFIED", "domain_proof_url": "https://approvalpath.example"}'))->>'lead_id', false);
+select public.set_manual_check(current_setting('tests.mlead')::uuid, 'PASS', 'test');
+reset role;
 select tests.login('jordan');
 set role authenticated;
 do $$
 declare r jsonb;
 begin
-  r := public.create_draft((select l.id from public.leads l
-                             where l.stage in ('found', 'screened') and l.channel is not null
-                               and not exists (select 1 from public.outreach_drafts d where d.lead_id = l.id)
-                             limit 1), 'Hola, una idea para su web.');
+  r := public.create_draft(current_setting('tests.mlead')::uuid, 'Hola, una idea para su web.',
+                           p_recipient => 'owner@marvin-test.example');
   r := public.submit_draft_batch(array[(r->>'draft_id')::uuid], 'marvin test');
   perform set_config('tests.mbatch', r->>'batch_id', false);
 end $$;

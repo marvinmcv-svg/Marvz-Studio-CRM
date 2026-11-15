@@ -8,7 +8,7 @@ PSQL="psql -h /tmp -p ${PGPORT_TEST:-54329} -U postgres -d squad -At -X"
 TABLES="agents markets catalogue_packages catalogue_package_prices catalogue_addons catalogue_care_plans catalogue_terms
 companies contacts leads stage_changes approval_batches outreach_drafts discovery_notes deals deal_items proposals
 projects scopes milestones deliverables payments escalations activity_log lessons testimonials referrals
-care_subscriptions care_hours_log do_not_contact"
+care_subscriptions care_hours_log do_not_contact lead_relations import_batches"
 mkdir -p "$ROOT/src/lib/demo"
 {
   echo "{\"exported_at\": \"$($PSQL -c "select now()")\""

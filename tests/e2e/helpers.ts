@@ -10,6 +10,8 @@ export const PAGES: { path: string; title: RegExp }[] = [
   { path: "/", title: /Good (morning|afternoon|evening)/ },
   { path: "/pipeline", title: /Pipeline/ },
   { path: "/pipeline?view=table", title: /Pipeline/ },
+  { path: "/pipeline?stage=held", title: /Pipeline/ },
+  { path: "/pipeline?quality=stale&view=table", title: /Pipeline/ },
   { path: `/leads/${LEAD_ID}`, title: new RegExp(LEAD_NAME) },
   { path: `/leads/${LEAD_ID}?tab=history`, title: new RegExp(LEAD_NAME) },
   { path: "/leads/new", title: /New lead/ },

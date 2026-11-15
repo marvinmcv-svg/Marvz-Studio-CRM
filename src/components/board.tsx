@@ -13,6 +13,7 @@ export type BoardCard = {
   id: string; code: string; name: string; city: string | null; market: string | null; industry: string | null;
   budget: string | null; channel: Channel | null; stage: Stage; daysInStage: number; value: string | null;
   owner: { name: string; color: string; kind: "human" | "ai" } | null; nextAction: string | null; flag: string | null;
+  flags?: { label: string; tone: Tone }[];
 };
 export type BoardColumn = { key: Stage; label: string; tone: Tone; cards: BoardCard[]; total: string | null };
 
@@ -70,6 +71,7 @@ export function Board({ columns, readOnly, agent }: { columns: BoardColumn[]; re
                   {c.budget && c.budget !== "unknown" && <Chip>{c.budget}</Chip>}
                   {c.channel && <Chip className="gap-1">{CHANNEL_ICON[c.channel]}</Chip>}
                   {c.flag && <Chip tone="red" dot>{c.flag}</Chip>}
+                  {c.flags?.map((f) => <Chip key={f.label} tone={f.tone} dot>{f.label}</Chip>)}
                   {c.value && <span className="ml-auto text-[12px] font-medium tabular-nums text-ink">{c.value}</span>}
                 </div>
                 <div className="mt-1.5 flex items-center justify-between text-[11px] text-ink-3">

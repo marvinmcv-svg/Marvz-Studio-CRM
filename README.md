@@ -15,6 +15,7 @@ Found → Screened → Draft ready → Approved → Sent → Replied → Discove
 |---|---|
 | **Overview (Top G dashboard)** | KPIs (MRR, pipeline, win rate, average deal, capacity), a "needs attention" queue (escalations, Letty's approval batches, slipping milestones, renewals), stage funnel, agent workload and a live activity feed |
 | **Pipeline** | Kanban and table views. Filter by stage, industry, service, market and owner. Drag a card to move it; a reason is required and logged |
+| **Lead quality** | Marvin's PASS/FAIL check, verified-domain evidence, holds, a `held` stage, duplicate/sister links that freeze both leads, recipients on drafts, structured addresses, sourced contact/reputation fields, import traceability and a stale-verification filter. Drafting and batching are blocked until a lead is ready, and the lead page explains why. Santa Cruz de la Sierra leads are never stored. |
 | **Lead record** | Contact, qualification and ownership on the left. Activity, stage history, outreach, discovery (with sources) and deals/proposals tabs on the right |
 | **Approvals** | Jordan's batches. Letty approves or rejects each draft; nothing can be sent unapproved |
 | **Escalations** | Agent → Top G → Letty chain, with severity, proposed action and resolution notes |
@@ -70,7 +71,7 @@ Demo mode has no sign-in, so a **production** build (`next start`, Vercel) refus
    npx supabase link --project-ref <ref>
    npx supabase db push
    ```
-   or by pasting the seven files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue; the fifth and sixth add the hardening rules; the seventh adds Marvin as an admin.
+   or by pasting the files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue; the fifth and sixth add the hardening rules; the seventh adds Marvin as an admin; the eighth adds bulk upload; the ninth and tenth add lead quality (held stage, manual check, evidence, holds, linked leads, delete).
 3. Optional demo data: run `supabase/seed.sql` in the SQL editor. Remove it before going live with `supabase/demo_cleanup.sql`, which keeps the team and catalogue.
 4. Check **Database → Publications → supabase_realtime** includes `activity_log`. The migration adds it, which drives live refresh.
 5. **Turn off public sign-ups** (Authentication → Sign In / Providers → *Allow new users to sign up* = off). Strangers who sign up still can't see anything (every policy and RPC requires a squad member, and the tests cover this), but there is no reason to allow it.

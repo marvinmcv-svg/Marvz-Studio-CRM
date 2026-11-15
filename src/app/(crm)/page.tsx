@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowRight, CalendarClock, CheckCheck, Clock, Plus } from "lucide-react";
+import { AlertTriangle, ArrowRight, CalendarClock, CheckCheck, Clock, Plus, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { ActivityFeed } from "@/components/activity-feed";
 import { AgentAvatar, Chip, Empty, Meter, PageHeader, Stat, StatusChip } from "@/components/ui";
@@ -6,6 +6,7 @@ import { STAGES } from "@/lib/constants";
 import { getMe, getTables } from "@/lib/data";
 import { daysBetween, monthLabel, pct, relTime, shortDate, usd } from "@/lib/format";
 import { capacity, capacityLimit, dealStats, isSlipping, mrr, openEscalations } from "@/lib/metrics";
+import { isStale, STALE_DAYS } from "@/lib/quality";
 
 export const metadata = { title: "Overview" };
 
@@ -13,7 +14,7 @@ export default async function OverviewPage() {
   const me = await getMe();
   const t = await getTables(
     "agents", "leads", "companies", "deals", "projects", "milestones", "escalations", "approval_batches",
-    "outreach_drafts", "care_subscriptions", "activity_log", "catalogue_terms",
+    "outreach_drafts", "care_subscriptions", "activity_log", "catalogue_terms", "lead_relations",
   );
   const company = new Map(t.companies.map((c) => [c.id, c]));
   const agentBy = new Map(t.agents.map((a) => [a.code, a]));
@@ -27,6 +28,20 @@ export default async function OverviewPage() {
   const slipping = t.milestones.filter(isSlipping);
   const projectBy = new Map(t.projects.map((p) => [p.id, p]));
   const renewals = t.care_subscriptions.filter((s) => s.status === "active" && daysBetween(s.renewal_date) <= 30);
+  // owner queue (lead quality): what is waiting on Marvin
+  const live = t.leads.filter((l) => !["lost", "do_not_contact"].includes(l.stage));
+  const awaitingCheck = live.filter((l) => (l.manual_check ?? "PENDING") === "PENDING" && l.stage !== "held");
+  const heldLeads = live.filter((l) => l.stage === "held");
+  const staleLeads = live.filter((l) => isStale(l));
+  const leadName = (id: string) => company.get(t.leads.find((l) => l.id === id)?.company_id ?? "")?.name ?? "lead";
+  const frozenPairs = t.lead_relations.filter((r) => r.status === "frozen" && r.lead_a < r.lead_b);
+  const ownerQueue = [
+    ...frozenPairs.map((r) => ({ key: r.id, href: `/leads/${r.lead_a}`, title: `${leadName(r.lead_a)} ↔ ${leadName(r.lead_b)}`,
+      chip: `${r.relation} · frozen`, detail: r.note ?? "Linked leads are frozen until Marvin clears the link" })),
+    ...(awaitingCheck.length ? [{ key: "check", href: "/pipeline?quality=check_pending&view=table", title: `${awaitingCheck.length} lead${awaitingCheck.length > 1 ? "s" : ""} waiting for Marvin's manual check`, chip: "PASS / FAIL", detail: "Drafting and stage moves stay blocked until they pass" }] : []),
+    ...(heldLeads.length ? [{ key: "held", href: "/pipeline?stage=held", title: `${heldLeads.length} held lead${heldLeads.length > 1 ? "s" : ""}`, chip: "held", detail: "Parked or unverified; release them once checked" }] : []),
+    ...(staleLeads.length ? [{ key: "stale", href: "/pipeline?quality=stale&view=table", title: `${staleLeads.length} lead${staleLeads.length > 1 ? "s" : ""} not re-verified in ${STALE_DAYS} days`, chip: "stale", detail: "Re-check website, phone and evidence before outreach" }] : []),
+  ];
 
   const counts = STAGES.map((s) => ({ ...s, n: t.leads.filter((l) => l.stage === s.key).length }));
   const maxN = Math.max(1, ...counts.map((c) => c.n));
@@ -63,8 +78,8 @@ export default async function OverviewPage() {
           <Stat label="Win rate" value={pct(ds.winRate)} hint={`${ds.won} won · ${ds.lost} lost`} href="/revenue" />
           <Stat label="Avg deal size" value={ds.avgDeal ? usd(ds.avgDeal) : "—"} hint="signed deals, USD" href="/revenue" />
           <Link href="/projects" className="card col-span-2 block px-4 py-3.5 transition-colors hover:border-line-2 lg:col-span-1">
-            <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">Capacity · {monthLabel(cap.month + "-01")}</div>
-            <div className="mt-1.5 flex items-baseline gap-1 text-[22px] font-semibold tabular-nums">
+            <div className="text-[12px] font-medium text-ink-3">Capacity · {monthLabel(cap.month + "-01")}</div>
+            <div className="mt-1 flex items-baseline gap-1 text-[26px] font-semibold tracking-[-0.02em] tabular-nums">
               {cap.used}<span className="text-[14px] text-ink-3">/ {cap.limit} slots</span>
             </div>
             <div className="mt-2"><Meter value={cap.used} max={cap.limit} tone={cap.remaining === 0 ? "bad" : cap.remaining === 1 ? "warn" : "accent"} /></div>
@@ -75,8 +90,20 @@ export default async function OverviewPage() {
           {/* Needs attention */}
           <section className="card">
             <div className="card-h"><span className="card-t">Needs attention</span>
-              <span className="text-[12px] text-ink-3">{escalations.length + pendingBatches.length + slipping.length + renewals.length} items</span></div>
+              <span className="text-[12px] text-ink-3">{ownerQueue.length + escalations.length + pendingBatches.length + slipping.length + renewals.length} items</span></div>
             <ul className="divide-y divide-line/70">
+              {ownerQueue.map((q) => (
+                <li key={q.key}>
+                  <Link href={q.href} className="flex items-start gap-3 px-4 py-3 hover:bg-panel-2/50">
+                    <ShieldCheck size={15} className="mt-0.5 text-violet-300" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2"><span className="font-medium">{q.title}</span><Chip tone="violet" dot>{q.chip}</Chip></div>
+                      <div className="mt-0.5 truncate text-[12px] text-ink-3">{q.detail}</div>
+                    </div>
+                    <ArrowRight size={14} className="mt-1 text-ink-3" />
+                  </Link>
+                </li>
+              ))}
               {escalations.map((e) => (
                 <li key={e.id}>
                   <Link href="/escalations" className="flex items-start gap-3 px-4 py-3 hover:bg-panel-2/50">

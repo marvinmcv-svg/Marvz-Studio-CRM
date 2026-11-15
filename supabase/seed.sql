@@ -17,12 +17,12 @@ declare
   l record;
   -- business, contact, email, phone, website, instagram, industry, city, country, market, services, budget, timeline, langs, source, channel, case, target stage
   leads jsonb := $j$[
-    ["Café Altura","Mariela Rojas","hola@cafealtura.bo","+591 71234567","cafealtura.bo","@cafealtura","Cafe","Santa Cruz","BO","US",["presence","whatsapp_enquiries"],"2-5k","This month",["es"],"Google Maps","whatsapp","Café Tropero","found"],
+    ["Café Altura","Mariela Rojas","hola@cafealtura.bo","+591 71234567","cafealtura.bo","@cafealtura","Cafe","Cochabamba","BO","US",["presence","whatsapp_enquiries"],"2-5k","This month",["es"],"Google Maps","whatsapp","Café Tropero","found"],
     ["Clínica Dental Sonrisa","Dr. Andrés Vaca","contacto@sonrisa.bo","+591 76543210","sonrisadental.bo",null,"Dental","Cochabamba","BO","US",["full_house","booking_deposits"],"5-10k","Next quarter",["es"],"Instagram search","whatsapp","Dental Smile Co.","screened"],
     ["Brava Fitness Studio","Jess Navarro","jess@bravafit.com","+1 512 555 0144","bravafit.com","@bravafitatx","Fitness","Austin","US","US",["full_house","booking_deposits"],"5-10k","6-8 weeks",["en","es"],"Google Maps","email","Core Collective","draft_ready"],
     ["Maple & Oak Interiors","Claire Dubois","claire@mapleoak.ca","+1 416 555 0190","mapleoak.ca","@mapleoakinteriors","Interior design","Toronto","CA","CA",["presence","scroll_storytelling"],"5-10k","Spring",["en","fr"],"Houzz","email","Atelier Nord","draft_ready"],
     ["Taquería El Güero","Luis Ortega","luis@elguero.mx","+52 33 5555 0123","elguero.mx","@taqueriaelguero","Restaurant","Guadalajara","MX","MX",["presence","whatsapp_enquiries"],"2-5k","ASAP",["es"],"Instagram search","whatsapp","Pollos Brasa","draft_ready"],
-    ["Casa Tajibo Boutique Hotel","Valeria Suárez","reservas@casatajibo.com","+591 70011223","casatajibo.com","@casatajibo","Hospitality","Santa Cruz","BO","US",["flagship","ai_whatsapp_bot","extra_language"],"10-20k","Before high season",["es","en"],"Booking.com","email","Selva Lodge","approved"],
+    ["Casa Tajibo Boutique Hotel","Valeria Suárez","reservas@casatajibo.com","+591 70011223","casatajibo.com","@casatajibo","Hospitality","Tarija","BO","US",["flagship","ai_whatsapp_bot","extra_language"],"10-20k","Before high season",["es","en"],"Booking.com","email","Selva Lodge","approved"],
     ["Northside Physio","Tom Whitaker","tom@northsidephysio.co.uk","+44 161 555 0101","northsidephysio.co.uk",null,"Healthcare","Manchester","UK","UK",["full_house","booking_deposits","local_seo"],"5-10k","Q1",["en"],"Google Maps","email","Dental Smile Co.","sent"],
     ["Bloom Florist Co.","Ava Chen","ava@bloomflorist.com.au","+61 3 5550 1234","bloomflorist.com.au","@bloomflorist.co","Retail","Melbourne","AU","AU",["presence","online_store"],"5-10k","Before Mother's Day",["en"],"Instagram search","instagram","Petal & Stem","sent"],
     ["Vela Yoga Barcelona","Núria Puig","hola@velayoga.es","+34 93 555 0177","velayoga.es","@velayogabcn","Wellness","Barcelona","ES","EU",["full_house","booking_deposits","extra_language"],"5-10k","2 months",["es","ca","en"],"Google Maps","email","Core Collective","replied"],
@@ -30,14 +30,14 @@ declare
     ["Panadería San Miguel","Rosa Mamani","pedidos@sanmiguel.bo","+591 72233445",null,"@panaderiasanmiguel","Bakery","La Paz","BO","US",["presence","online_payments"],"<2k","Flexible",["es"],"Referral","whatsapp","Café Tropero","discovery"],
     ["Studio Lumen Architects","Ethan Park","ethan@studiolumen.ca","+1 604 555 0188","studiolumen.ca","@studiolumen","Architecture","Vancouver","CA","CA",["flagship","scroll_storytelling","brand_identity"],"20k+","Q2",["en"],"Awwwards","email","Atelier Nord","proposal"],
     ["Green Leaf Dental","Priya Shah","priya@greenleafdental.co.uk","+44 113 555 0166","greenleafdental.co.uk",null,"Dental","Leeds","UK","UK",["full_house","booking_deposits","ai_assistant"],"10-20k","8 weeks",["en"],"Google Maps","email","Dental Smile Co.","proposal"],
-    ["Andes Trek Expeditions","Diego Fernández","diego@andestrek.com","+591 77788990","andestrek.com","@andestrek","Tourism","Santa Cruz","BO","US",["flagship","online_payments","extra_language"],"10-20k","Before July",["es","en"],"TripAdvisor","email","Selva Lodge","signed"],
-    ["Sabor Cruceño Catering","Carla Justiniano","eventos@saborcruceno.bo","+591 73344556","saborcruceno.bo","@saborcruceno","Catering","Santa Cruz","BO","US",["full_house","events","online_payments"],"5-10k","Wedding season",["es"],"Instagram search","whatsapp","Pollos Brasa","in_delivery"],
+    ["Andes Trek Expeditions","Diego Fernández","diego@andestrek.com","+591 77788990","andestrek.com","@andestrek","Tourism","La Paz","BO","US",["flagship","online_payments","extra_language"],"10-20k","Before July",["es","en"],"TripAdvisor","email","Selva Lodge","signed"],
+    ["Sabor Cruceño Catering","Carla Justiniano","eventos@saborcruceno.bo","+591 73344556","saborcruceno.bo","@saborcruceno","Catering","Sucre","BO","US",["full_house","events","online_payments"],"5-10k","Wedding season",["es"],"Instagram search","whatsapp","Pollos Brasa","in_delivery"],
     ["Pulse Pilates","Fernanda Garza","fer@pulsepilates.mx","+52 81 5555 0144","pulsepilates.mx","@pulsepilatesmty","Fitness","Monterrey","MX","MX",["presence","booking_deposits"],"2-5k","ASAP",["es"],"Google Maps","whatsapp","Core Collective","in_delivery"],
     ["Harbour Legal","James O'Neill","james@harbourlegal.com.au","+61 2 5550 9876","harbourlegal.com.au",null,"Legal","Sydney","AU","AU",["full_house","copywriting"],"10-20k","Q4",["en"],"LinkedIn","email","Counsel & Co","delivered"],
-    ["Nido Kids Academy","Lucía Paz","direccion@nidokids.bo","+591 75566778","nidokids.bo","@nidokidsscz","Education","Santa Cruz","BO","US",["presence","whatsapp_enquiries"],"2-5k","Before enrolment",["es"],"Facebook groups","whatsapp","Little Steps","care_plan"],
+    ["Nido Kids Academy","Lucía Paz","direccion@nidokids.bo","+591 75566778","nidokids.bo","@nidokidsscz","Education","Cochabamba","BO","US",["presence","whatsapp_enquiries"],"2-5k","Before enrolment",["es"],"Facebook groups","whatsapp","Little Steps","care_plan"],
     ["Ruta 4 Coffee Roasters","Sam Ortiz","sam@ruta4coffee.com","+1 720 555 0133","ruta4coffee.com","@ruta4coffee","Cafe","Denver","US","US",["full_house","online_store","monthly_seo"],"5-10k","6 weeks",["en","es"],"Instagram search","instagram","Café Tropero","care_plan"],
     ["QuickFix Plumbing","Dan Miller","dan@quickfixplumb.com","+1 214 555 0102","quickfixplumb.com",null,"Trades","Dallas","US","US",["base"],"<2k","ASAP",["en"],"Google Maps","email",null,"lost"],
-    ["Ferretería Central","Jorge Peña","ventas@ferreteriacentral.bo","+591 70099887","ferreteriacentral.bo",null,"Retail","Santa Cruz","BO","US",["presence"],"<2k","Unknown",["es"],"Google Maps","whatsapp",null,"do_not_contact"]
+    ["Ferretería Central","Jorge Peña","ventas@ferreteriacentral.bo","+591 70099887","ferreteriacentral.bo",null,"Retail","Oruro","BO","US",["presence"],"<2k","Unknown",["es"],"Google Maps","whatsapp",null,"do_not_contact"]
   ]$j$;
   item jsonb; target text; i int := 0;
   stage_order text[] := array['found','screened','draft_ready','approved','sent','replied','discovery','proposal','signed','in_delivery','delivered','care_plan'];
@@ -48,6 +48,7 @@ begin
   ----------------------------------------------------------------------------
   perform pg_temp.act('hunter');
   for item in select * from jsonb_array_elements(leads) loop
+    i := i + 1;
     r := public.create_lead(
       p_business => item->>0, p_contact_name => item->>1, p_email => item->>2, p_phone => item->>3,
       p_website => item->>4, p_instagram => item->>5, p_industry => item->>6, p_city => item->>7,
@@ -55,7 +56,19 @@ begin
       p_service_interest => array(select jsonb_array_elements_text(item->10)),
       p_budget_band => item->>11, p_timeline => item->>12,
       p_languages => array(select jsonb_array_elements_text(item->13)),
-      p_source => item->>14, p_channel => (item->>15)::outreach_channel, p_portfolio_case => item->>16);
+      p_source => item->>14, p_channel => (item->>15)::outreach_channel, p_portfolio_case => item->>16,
+      p_street => 'Calle ' || (10 + jsonb_array_length(leads) - i) || ' #' || (100 + i * 7),
+      p_source_key => format('DEMO-%s', 100 + i),
+      -- evidence: verified domain where there is a site, confirmed-no-site otherwise
+      p_details => case when item->>4 is not null
+        then jsonb_build_object('domain_status', 'VERIFIED', 'domain_proof_url', 'https://' || (item->>4),
+                                'website_problem_type', case when i % 2 = 0 then 'outdated' else 'non_mobile' end,
+                                'operating_evidence_date', current_date - (i * 3), 'rating', 4.0 + (i % 10) / 10.0,
+                                'review_count', 20 + i * 11, 'rating_source', 'Google Maps',
+                                'rating_source_url', 'https://maps.google.com/?q=' || replace(item->>0, ' ', '+'),
+                                'owner_name', item->>1, 'owner_role', 'Owner')
+        else jsonb_build_object('domain_status', 'NSC', 'website_problem_type', 'no_site',
+                                'operating_evidence_date', current_date - (i * 3)) end);
     ids := ids || (r->>'lead_id')::uuid;
   end loop;
 
@@ -87,11 +100,18 @@ begin
         'Outdated site, strong reviews, active Instagram. Clear fit for ' || (leads->(i-1)->10->>0) || '.');
     end if;
     if t >= 3 then
+      -- Marvin's manual check comes before any drafting
+      perform pg_temp.act('marvin');
+      perform public.set_manual_check(lead, 'PASS', 'Checked site, reviews and contact details.');
+      perform pg_temp.act('jordan');
       r := public.create_draft(lead,
         format('Hola %s, vi %s y me encantó lo que hacen. Armamos un sitio para %s que duplicó sus reservas — ¿te muestro cómo se vería el tuyo? 3 ideas concretas, sin compromiso.',
                split_part(leads->(i-1)->>1, ' ', 1), leads->(i-1)->>0, coalesce(leads->(i-1)->>16, 'un negocio similar')),
         null, 'Una idea para ' || (leads->(i-1)->>0), (leads->(i-1)->13->>0),
-        'References their ' || coalesce(leads->(i-1)->>16, 'industry') || ' case study and recent Instagram activity.');
+        'References their ' || coalesce(leads->(i-1)->>16, 'industry') || ' case study and recent Instagram activity.',
+        p_recipient => case leads->(i-1)->>15 when 'email' then leads->(i-1)->>2
+                                               when 'instagram' then leads->(i-1)->>5
+                                               else leads->(i-1)->>3 end);
       if t = 3 then
         if i in (4, 5) then drafts_b2 := drafts_b2 || (r->>'draft_id')::uuid; end if;
       else
@@ -257,6 +277,39 @@ begin
   perform pg_temp.act('jordan');
   perform public.add_do_not_contact('domain', 'spammy-leads.example', 'Bounced + complaint');
 
+  ----------------------------------------------------------------------------
+  -- Lead quality demo: a held lead, a frozen sister pair, a lead on hold
+  ----------------------------------------------------------------------------
+  perform pg_temp.act('hunter');
+  r := public.create_lead(p_business => 'Mirador Rooftop Bistro', p_contact_name => 'Andrea Vidal',
+         p_phone => '+591 76611223', p_city => 'Cochabamba', p_country => 'BO', p_industry => 'Restaurant',
+         p_source => 'Google Maps', p_channel => 'whatsapp', p_street => 'Av. América 455',
+         p_hold => true, p_hold_reason => 'Website domain unconfirmed; Google listing says temporarily closed.',
+         p_source_key => 'DEMO-201');
+  r := public.create_lead(p_business => 'Kinetic Detail Studio Brickell', p_contact_name => 'Marcus Reed',
+         p_email => 'brickell@kineticdetail.studio', p_city => 'Miami', p_country => 'US', p_industry => 'Automotive',
+         p_source => 'Instagram search', p_channel => 'instagram', p_instagram => '@kineticbrickell',
+         p_force => true, p_source_key => 'DEMO-202',
+         p_details => '{"domain_status": "UNVERIFIED"}');
+  perform public.link_leads((r->>'lead_id')::uuid,
+    (select ld.id from public.leads ld join public.companies cc on cc.id = ld.company_id where cc.name = 'Kinetic Auto Detailing'),
+    'sister', 'Same owner (Marcus Reed); second location or a rebrand? Needs Marvin to decide before outreach.');
+  r := public.create_leads_bulk($b$[
+    {"business": "Lavandería Burbuja", "phone": "+591 74455667", "city": "Tarija", "country": "BO", "industry": "Laundry",
+     "source": "Google Maps", "channel": "whatsapp", "source_key": "P527-428", "street": "Calle Ingavi 233",
+     "domain_status": "NSC", "website_problem_type": "no_site", "whatsapp": "+591 74455667",
+     "whatsapp_source_url": "https://maps.google.com/?q=Lavanderia+Burbuja+Tarija", "rating": 4.7, "review_count": 58,
+     "rating_source": "Google Maps"},
+    {"business": "Óptica Visión Clara", "email": "contacto@visionclara.example", "city": "Sucre", "country": "BO",
+     "industry": "Optician", "source": "Google Maps", "channel": "email", "source_key": "P527-429",
+     "website": "visionclara.example", "domain_status": "VERIFIED", "domain_proof_url": "https://visionclara.example",
+     "website_problem_type": "non_mobile", "email_source_url": "https://visionclara.example/contacto",
+     "owner_name": "Dra. Paola Rivas", "owner_role": "Owner", "owner_source_url": "https://visionclara.example/nosotros"}
+  ]$b$, p_source_file => 'hunter-week-46.csv', p_note => 'Weekly Google Maps sweep');
+  perform public.set_lead_hold(
+    (select ld.id from public.leads ld join public.companies cc on cc.id = ld.company_id where cc.name = 'Clínica Dental Sonrisa'),
+    true, 'Waiting for the owner''s direct number; the listed one goes to a call centre.');
+
   perform pg_temp.act('top_g');
 end $$;
 
@@ -276,6 +329,9 @@ begin
     from (select lead_id, min(created_at) first_at, max(created_at) last_at from public.stage_changes group by lead_id) s
    where s.lead_id = l.id;
   update public.companies c set created_at = l.created_at from public.leads l where l.company_id = c.id;
+  -- verification dates follow creation, so older leads show up as "not re-verified"
+  update public.leads set last_verified_at = created_at + interval '1 hour', evidence_checked_at = created_at + interval '1 hour'
+   where last_verified_at is not null;
   update public.deals d set created_at = (select min(a.created_at) from public.activity_log a where a.entity_id = d.id),
          signed_at = case when d.signed_at is not null then
                      (select max(a.created_at) from public.activity_log a where a.entity_id = d.id and a.action = 'sign_deal') end;

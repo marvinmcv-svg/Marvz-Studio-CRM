@@ -83,7 +83,7 @@ select tests.expect_error($$select public.advance_stage(
 select tests.expect_error($$select public.advance_stage(
   (select id from public.leads where stage = 'screened' limit 1), 'proposal', 'skip ahead')$$, 'cannot move a lead from');
 select tests.expect_error($$select public.advance_stage(
-  (select id from public.leads where stage = 'discovery' limit 1), 'signed', 'no deal')$$, 'without a signed deal');
+  (select id from public.leads where stage = 'discovery' and not public.lead_is_frozen(id) limit 1), 'signed', 'no deal')$$, 'without a signed deal');
 select tests.expect_error($$select public.advance_stage(
   (select id from public.leads where stage = 'lost' limit 1), 'discovery', 'revive')$$, 'cannot move a lead from');
 -- a late reply never drags a client back down the pipeline
@@ -103,15 +103,24 @@ select tests.expect_error($$select public.advance_stage(
   (select id from public.leads where stage = 'proposal' limit 1), 'in_delivery', 'skip')$$, 'cannot move a lead from');
 reset role;
 
--- Admins can still correct anything
+-- Admins can still correct anything, once Marvin's manual check is PASS (migration 10)
+select set_config('tests.lost_lead', (select id::text from public.leads where stage = 'lost' limit 1), false);
+select tests.login('top_g');
+set role authenticated;
+select tests.expect_error($$select public.advance_stage(current_setting('tests.lost_lead')::uuid, 'found', 'Re-open')$$,
+                          'manual check is PENDING');
+reset role;
+select tests.login('marvin');
+set role authenticated;
+select public.set_manual_check(current_setting('tests.lost_lead')::uuid, 'PASS', 'Referral confirmed');
+reset role;
 select tests.login('top_g');
 set role authenticated;
 do $$
-declare v_lead uuid;
 begin
-  select id into v_lead from public.leads where stage = 'lost' limit 1;
-  perform public.advance_stage(v_lead, 'found', 'Re-opened by Top G after a referral');
-  perform tests.eq((select stage::text from public.leads where id = v_lead), 'found', 'Top G can re-open a lost lead');
+  perform public.advance_stage(current_setting('tests.lost_lead')::uuid, 'found', 'Re-opened by Top G after a referral');
+  perform tests.eq((select stage::text from public.leads where id = current_setting('tests.lost_lead')::uuid), 'found',
+                   'Top G can re-open a lost lead after Marvin''s PASS');
 end $$;
 reset role;
 
@@ -144,7 +153,7 @@ end $$;
 select tests.login('jordan');
 set role authenticated;
 select tests.expect_error($$select public.log_send(current_setting('tests.dnc_draft')::uuid)$$, 'do-not-contact');
-select tests.expect_error($$select public.create_draft(current_setting('tests.dnc_found')::uuid, 'Hi!', 'email')$$, 'do-not-contact');
+select tests.expect_error($$select public.create_draft(current_setting('tests.dnc_found')::uuid, 'Hi!', 'email', p_recipient => 'someone@else.example')$$, 'do-not-contact');
 do $$
 declare r jsonb;
 begin

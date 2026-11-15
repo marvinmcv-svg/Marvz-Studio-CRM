@@ -122,11 +122,12 @@ Never work around a refusal (e.g. by trying another function to force the same r
 | `letty` | Owner (human) | everything; edits catalogue and team |
 | `marvin` | Admin (human) | everything; edits catalogue and team |
 | `top_g` | Coordinator (AI admin) | every function; cannot edit catalogue/team |
-| `hunter` | Lead finder | `create_lead`, `create_leads_bulk`, `update_lead`, `add_do_not_contact` + shared |
+| `hunter` | Lead finder | `create_lead`, `create_leads_bulk`, `update_lead`, `update_company_details`, `update_contact_details`, `set_lead_hold`, `link_leads`, `add_do_not_contact` + shared |
 | `jordan` | Outreach | `screen_lead`, `create_draft`, `submit_draft_batch`, `log_send`, `log_reply`, `update_lead`, `add_do_not_contact` + shared |
 | `quinn` | Closer | `add_discovery_note`, `create_deal`, `create_proposal`, `sign_deal`, `log_reply`, `update_lead`, `add_do_not_contact` + shared |
 | `dana` | Delivery | `create_scope`, `create_project`, `update_milestone`, `update_deliverable`, `record_payment`, `complete_project`, `record_testimonial`, `add_referral`, `start_care_plan`, `log_care_hours`, `add_lesson`, `update_lead`, `add_do_not_contact` + shared |
-| everyone | shared | `advance_stage` (within role), `raise_escalation`, `get_lead_context`, `capacity`, `check_do_not_contact`, `find_duplicate_leads`, `quote_deal`, `dashboard_metrics`, `current_agent` |
+| `marvin` only | owner checks | `set_manual_check`, `clear_lead_link`, `delete_lead` |
+| everyone | shared | `advance_stage` (within role), `raise_escalation`, `stale_leads`, `get_lead_context`, `capacity`, `check_do_not_contact`, `find_duplicate_leads`, `quote_deal`, `dashboard_metrics`, `current_agent` |
 | admins only | | `record_approval`, `update_escalation` |
 
 Admins = Letty, Marvin, Top G. Every action is logged with the caller's name, so **each agent must use
@@ -137,13 +138,27 @@ its own login**.
 ## 4. Pipeline
 
 ```
-found → screened → draft_ready → approved → sent → replied → discovery → proposal → signed
+held ⇄ found → screened → draft_ready → approved → sent → replied → discovery → proposal → signed
       → in_delivery → delivered → care_plan                         (+ lost, do_not_contact)
 ```
 
+**Lead quality gates (apply to every agent, admins included):**
+* **Marvin's manual check** (`manual_check`: `PENDING` by default, `PASS`, `FAIL`) — only Marvin sets it.
+  `advance_stage` (except to `lost` / `do_not_contact` / `held`) and `create_draft` require **PASS**.
+* **Domain evidence** — `create_draft` refuses leads whose `domain_status` is `UNVERIFIED`
+  (verify it with a proof URL, or mark `NSC` = confirmed no site).
+* **Holds** — a lead or draft `on_hold` can't be drafted or batched until released (`set_lead_hold`, `set_draft_hold`).
+* **Frozen links** — leads linked as `duplicate` / `sister` / `rename` are frozen (no screening, drafting,
+  batching or forward moves) until Marvin clears the link.
+* **Held stage** — parked / unverified leads live at `held`: stored and visible, checked for duplicates,
+  never drafted. Release with `advance_stage(…, 'found', …)` once checked (needs PASS).
+* **Santa Cruz de la Sierra** leads are never stored: `create_lead` returns `status: "excluded_region"`.
+* `get_lead_context` returns `lead.outreach_blockers` — the exact reasons a lead isn't ready yet.
+
 | Stage | Who moves a lead here | How | Allowed only from |
 |---|---|---|---|
-| `found` | Hunter | `create_lead` | (new leads) |
+| `held` | Hunter / Jordan | `create_lead` with `p_hold`, `advance_stage` | `found`, `screened` |
+| `found` | Hunter | `create_lead`, or release from `held` | (new leads), `held` |
 | `screened` | Jordan | `screen_lead` (pass) | `found` |
 | `draft_ready` | Jordan | `create_draft` | `found`, `screened` |
 | `approved` | Letty / Marvin (Top G records it) | `record_approval` | `found`, `screened`, `draft_ready` |
@@ -155,7 +170,7 @@ found → screened → draft_ready → approved → sent → replied → discove
 | `in_delivery` | Dana | `create_project` (needs a project) | `signed` |
 | `delivered` | Dana | `complete_project` | `in_delivery` |
 | `care_plan` | Dana | `start_care_plan` | `in_delivery`, `delivered` |
-| `lost` | anyone | `advance_stage`, `screen_lead` (fail) | any stage **before** `signed` |
+| `lost` | anyone | `advance_stage`, `screen_lead` (fail) | `held` or any stage **before** `signed` |
 | `do_not_contact` | anyone | `add_do_not_contact`, `advance_stage` | any stage |
 
 Leads never move backwards, and `lost` / `do_not_contact` leads can't be revived, except by an admin.
@@ -184,6 +199,17 @@ Every manual move needs a reason and is recorded in `stage_changes`.
 | lesson category | `targeting`, `outreach`, `discovery`, `pricing`, `delivery`, `general` |
 
 ### Catalogue codes (prices in USD; other markets are converted)
+
+### Evidence & sourced fields
+
+| Where | Fields |
+|---|---|
+| lead | `domain_status` (`VERIFIED` needs `domain_proof_url` · `NSC` · `UNVERIFIED`), `domain_proof_url`, `website_problem_type` (`outdated` · `non_mobile` · `no_site`), `operating_evidence_date`, `evidence_checked_at`, `phone_source_url`, `last_verified_at`, `source_key`, `import_batch_id` |
+| company | `street`, `city`, `region`, `postcode`, `country` (address is used for duplicate matching), `contact_form_url`, `whatsapp`, `telegram`, `facebook_url`, `tiktok_url`, `linkedin_url`, `review_count`, `rating` (0–5), `rating_source`, `site_language`, `owner_name`, `owner_role` — each with a `…_source_url` and `…_checked_at` |
+| contact | `email_source_url`, `email_checked_at`, `phone_source_url`, `phone_checked_at` |
+
+`…_checked_at` and `last_verified_at` are stamped automatically when you set a value or its source URL.
+All of these are plain columns, so you can filter on them: `GET /rest/v1/leads?domain_status=eq.UNVERIFIED`.
 
 **Packages** (`p_package`): `base` Base site $1,900 (2–3 wks) · `presence` Presence $2,900 (2–3 wks, 1 mo Basic Care) ·
 `full_house` Full House $5,900 (4–5 wks, 3 mo Pro Care) · `flagship` Flagship $11,900 (7–9 wks, 6 mo Pro Care + 3 mo AI usage)
@@ -269,9 +295,12 @@ Read-only price calculation from the catalogue. Unknown codes are refused.
 
 ### 6.2 Hunter — leads
 
-#### `create_lead(p_business text, p_contact_name text?, p_email text?, p_phone text?, p_website text?, p_instagram text?, p_industry text?, p_city text?, p_country text?, p_market text = 'US', p_service_interest text[] = [], p_budget_band text = 'unknown', p_timeline text?, p_languages text[] = ['es'], p_source text?, p_channel text?, p_portfolio_case text?, p_notes text?, p_force boolean = false)`
-Creates company + contact + lead at stage `found` (owner: Jordan). Checks the do-not-contact list and
-duplicates first.
+#### `create_lead(p_business text, p_contact_name text?, p_email text?, p_phone text?, p_website text?, p_instagram text?, p_industry text?, p_city text?, p_country text?, p_market text = 'US', p_service_interest text[] = [], p_budget_band text = 'unknown', p_timeline text?, p_languages text[] = ['es'], p_source text?, p_channel text?, p_portfolio_case text?, p_notes text?, p_force boolean = false, p_street text?, p_region text?, p_postcode text?, p_hold boolean = false, p_hold_reason text?, p_source_key text?, p_import_batch_id uuid?, p_details jsonb = {})`
+Creates company + contact + lead at stage `found` (owner: Jordan), or at `held` with `p_hold: true` (reason
+required). Checks the do-not-contact list and duplicates first (name, website, Instagram, email, phone and
+**address**; held leads included). `p_details` takes any evidence/sourced field from §5 (e.g.
+`{"domain_status":"VERIFIED","domain_proof_url":"https://…","whatsapp":"+591…","whatsapp_source_url":"https://…"}`);
+unknown keys are refused. Santa Cruz de la Sierra → `{"status":"excluded_region","created":false}` and nothing is stored.
 ```json
 { "p_business": "Café Altura", "p_contact_name": "Mariela Rojas", "p_phone": "+591 71234567",
   "p_website": "cafealtura.bo", "p_instagram": "@cafealtura", "p_industry": "Cafe",
@@ -287,12 +316,17 @@ Results:
 `duplicate` → don't create; only resend with `"p_force": true` if you're sure it's a different business.
 `do_not_contact` → skip permanently.
 
-#### `create_leads_bulk(p_leads jsonb, p_force boolean = false)` — bulk upload
+#### `create_leads_bulk(p_leads jsonb, p_force boolean = false, p_source_file text?, p_note text?)` — bulk upload
 Uploads **up to 100 leads in one call**. Each row goes through exactly the same checks as `create_lead`
 (do-not-contact, duplicates — including against earlier rows in the same batch — logging). A bad row
 never stops the batch; it is reported with its error and the rest continue. Takes ~0.3 s per 100 leads.
 
-Each row is an object with the `create_lead` fields **without the `p_` prefix**. Only `business` is required.
+Each call creates an **import record** (`import_batches`, with `p_source_file`) and stamps every lead with it;
+the response includes `import_batch_id` / `import_ref`. Put each row's file reference in `source_key` (e.g. `P527-428`).
+
+Each row is an object with the `create_lead` fields **without the `p_` prefix** (plus `street`, `region`,
+`postcode`, `hold`, `hold_reason`, `source_key`, and any evidence/sourced field from §5 directly on the row).
+Only `business` is required. Row status can also be `excluded_region`.
 `service_interest` and `languages` may be arrays or comma-separated strings; `channel` is case-insensitive;
 `"force": true` on a row overrides the duplicate check for that row only.
 ```json
@@ -315,7 +349,28 @@ missing business name or an invalid channel). More than 100 rows → the call is
 #### `update_lead(p_lead_id uuid, p_fields jsonb, p_reason text?)`
 Update lead fields (not the stage). Allowed keys in `p_fields`: `industry`, `service_interest` (array),
 `market_code`, `budget_band`, `timeline`, `languages` (array), `source`, `channel`, `portfolio_case`,
-`next_action`, `next_action_at` (timestamp), `owner_agent`.
+`next_action`, `next_action_at` (timestamp), `owner_agent`, and the lead evidence fields (`domain_status`,
+`domain_proof_url`, `website_problem_type`, `operating_evidence_date`, `evidence_checked_at`,
+`phone_source_url`, `last_verified_at`, `source_key`). Updating evidence refreshes `last_verified_at`.
+`manual_check` and holds have their own functions.
+
+#### `update_company_details(p_company_id uuid, p_fields jsonb, p_reason text?)` · `update_contact_details(p_contact_id uuid, p_fields jsonb, p_reason text?)`
+Address and the sourced company fields from §5 / the contact's email/phone sources. Unknown keys are refused.
+```json
+{ "p_company_id": "…", "p_fields": { "whatsapp": "+591 74455667", "whatsapp_source_url": "https://maps.google.com/…",
+  "rating": 4.7, "review_count": 58, "rating_source": "Google Maps", "owner_name": "Rosa", "owner_role": "Owner" } }
+```
+
+#### `set_lead_hold(p_lead_id uuid, p_on_hold boolean, p_reason text?)`
+Hold (reason required) or release a lead. Held leads can't be drafted or batched.
+
+#### `link_leads(p_lead_a uuid, p_lead_b uuid, p_relation text, p_note text?)`
+`duplicate` · `sister` · `rename`. Writes the link for **both** leads in one call and **freezes** both until
+Marvin clears it. → `{ "status": "frozen", "group_id": "…" }`
+
+#### `stale_leads(p_days int = 30)`
+Leads (not lost / do-not-contact) whose `last_verified_at` is older than `p_days` days or missing — re-verify
+these before outreach.
 ```json
 { "p_lead_id": "…", "p_fields": { "budget_band": "5-10k", "next_action": "Call Tuesday" }, "p_reason": "Owner confirmed budget" }
 → { "status": "updated", "lead_id": "…" }
@@ -327,13 +382,21 @@ Update lead fields (not the stage). Allowed keys in `p_fields`: `industry`, `ser
 Lead must be `found`/`screened`. Pass → `screened`; fail → `lost` (notes become the lost reason).
 `p_fit_score` is 0–100. → `{ "status": "screened" | "lost", "lead_id": "…" }`
 
-#### `create_draft(p_lead_id uuid, p_body text, p_channel text?, p_subject text?, p_language text = 'es', p_personalisation text?)`
+#### `create_draft(p_lead_id uuid, p_body text, p_channel text?, p_subject text?, p_language text = 'es', p_personalisation text?, p_recipient text)`
 Writes a personalised message (status `ready`); moves `found`/`screened` leads to `draft_ready`.
-Refused for lost/do-not-contact leads and contacts on the do-not-contact list. Channel defaults to the lead's.
-→ `{ "status": "ready", "draft_id": "…" }`
+**`p_recipient` is required**: the exact email, `@handle`, contact-form URL or phone it goes to (shown to
+Marvin at approval and locked once submitted). Refused when the recipient or lead is on the do-not-contact
+list, or when any quality gate fails (held / on hold / frozen / manual check not PASS / domain UNVERIFIED —
+the error lists every reason). Channel defaults to the lead's.
+→ `{ "status": "ready", "draft_id": "…", "recipient": "hola@…", "recipient_kind": "email" }`
+
+#### `set_draft_hold(p_draft_id uuid, p_on_hold boolean, p_reason text?)`
+Hold (reason required) or release a draft that isn't in a batch yet.
 
 #### `submit_draft_batch(p_draft_ids uuid[], p_note text?)`
-Sends drafts (status `draft`/`ready`) to Letty for approval. Drafts are locked from now on.
+Sends drafts (status `draft`/`ready`) for approval. The whole batch is **refused** if any draft is on hold,
+has no recipient, or its lead fails a quality gate; the error names each blocked draft and why.
+Drafts are locked from now on.
 → `{ "status": "pending", "batch_id": "…", "batch_ref": 3, "drafts": 5 }`
 
 #### `log_send(p_draft_id uuid, p_external_ref text?, p_sent_at timestamp = now)`
@@ -363,6 +426,19 @@ decision Letty/Marvin actually made.
 #### `update_escalation(p_escalation_id uuid, p_action text, p_notes text?)`
 `review` (take it) · `escalate_to_letty` (needs a human) · `resolve` (`p_notes` required) · `dismiss`.
 → `{ "status": "resolve", "escalation_id": "…" }`
+
+### 6.4b Marvin only — owner checks
+
+#### `set_manual_check(p_lead_id uuid, p_result text, p_note text?)`
+`PASS` · `FAIL` · `PENDING`. Required before drafting or advancing a lead.
+
+#### `clear_lead_link(p_lead_a uuid, p_lead_b uuid, p_note text)`
+Clears a frozen duplicate/sister/rename link for both leads (decision note required).
+
+#### `delete_lead(p_lead_id uuid, p_confirm text, p_reason text)`
+Permanently deletes a lead. `p_confirm` must be the lead's code (`"SQ-14"`); `p_reason` required. A full
+snapshot is written to the activity log first. Leads with a signed deal or a project can't be deleted.
+Also available as a button on the lead page.
 
 ### 6.5 Quinn — discovery, deals, proposals
 

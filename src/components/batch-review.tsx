@@ -7,7 +7,7 @@ import { useState, useTransition } from "react";
 import { recordApproval } from "@/app/actions";
 import { Chip } from "./ui";
 
-type D = { id: string; leadId: string; business: string; code: string; channel: string; language: string; subject: string | null; body: string; personalisation: string | null };
+type D = { id: string; leadId: string; business: string; code: string; channel: string; language: string; subject: string | null; body: string; personalisation: string | null; recipient: string | null; recipientKind: string | null };
 
 export function BatchReview({ batchId, drafts, canDecide }: { batchId: string; drafts: D[]; canDecide: boolean }) {
   // Nothing is pre-selected: Letty decides each draft explicitly before the batch can be saved.
@@ -37,6 +37,11 @@ export function BatchReview({ batchId, drafts, canDecide }: { batchId: string; d
                     className={clsx("flex h-6 items-center gap-1 rounded-md px-2 text-[12px]", decision[d.id] === "reject" ? "bg-rose-400/15 text-rose-300" : "text-ink-3")}><X size={12} /> Reject</button>
                 </div>
               )}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[13px]">
+              <span className="text-ink-3">To</span>
+              <span className="rounded-full bg-accent/10 px-2.5 py-0.5 font-medium text-accent">{d.recipient ?? "no recipient"}</span>
+              {d.recipientKind && <span className="text-[12px] text-ink-3">{d.recipientKind.replace("_", " ")}</span>}
             </div>
             {d.subject && <div className="mt-1.5 text-ink-2">{d.subject}</div>}
             <p className="mt-1 whitespace-pre-wrap text-ink">{d.body}</p>

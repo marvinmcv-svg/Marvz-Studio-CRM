@@ -9,14 +9,20 @@ select set_config('request.jwt.claims', '{}', false);
 select set_config('tests.appr_lead', (
   select l.id::text from public.leads l
    where l.stage in ('found', 'screened') and jsonb_array_length(public.lead_dnc_matches(l.id)) = 0
+     and not l.on_hold and not public.lead_is_frozen(l.id) and l.domain_status <> 'UNVERIFIED'
    limit 1), false);
+select tests.login('marvin');
+set role authenticated;
+select public.set_manual_check(current_setting('tests.appr_lead')::uuid, 'PASS', 'test');
+reset role;
 
 select tests.login('jordan');
 set role authenticated;
 do $$
 declare r jsonb;
 begin
-  r := public.create_draft(current_setting('tests.appr_lead')::uuid, 'Hola, una idea rápida para su web.', 'email');
+  r := public.create_draft(current_setting('tests.appr_lead')::uuid, 'Hola, una idea rápida para su web.', 'email',
+                           p_recipient => 'owner@decider.example');
   perform set_config('tests.appr_draft', r->>'draft_id', false);
   r := public.submit_draft_batch(array[(r->>'draft_id')::uuid], 'decider test');
   perform set_config('tests.appr_batch', r->>'batch_id', false);
