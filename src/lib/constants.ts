@@ -29,6 +29,7 @@ export const CHANNELS = ["whatsapp", "email", "instagram"] as const;
 /** Stages each agent may move a lead INTO (mirrors public.allowed_target_stages). */
 export const ALLOWED_TARGETS: Record<string, Stage[] | "all"> = {
   letty: "all",
+  marvin: "all",
   top_g: "all",
   hunter: ["found", "lost", "do_not_contact"],
   jordan: ["found", "screened", "draft_ready", "sent", "replied", "lost", "do_not_contact"],

@@ -1,9 +1,17 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { ALL_STAGES, ALLOWED_TARGETS, canMoveStage, STAGE_PREDECESSORS } from "../constants";
 import type { Stage } from "../types";
 
-const sql = (f: string) => readFileSync(new URL(`../../../supabase/migrations/${f}`, import.meta.url), "utf8");
+const DIR = new URL("../../../supabase/migrations/", import.meta.url);
+const sql = (f: string) => readFileSync(new URL(f, DIR), "utf8");
+/** Source of the newest migration that (re)defines a function. */
+const latest = (fn: string) => {
+  const file = readdirSync(DIR).filter((f) => f.endsWith(".sql")).sort().reverse()
+    .find((f) => sql(f).includes(`function public.${fn}(`));
+  if (!file) throw new Error(`${fn} not found in migrations`);
+  return sql(file);
+};
 
 /** Parse `when 'x' then '{a,b}'` rows out of a SQL CASE expression. */
 function parseCase(body: string, quoted: boolean): Record<string, string[]> {
@@ -17,7 +25,7 @@ function parseCase(body: string, quoted: boolean): Record<string, string[]> {
 
 describe("UI stage rules mirror the database", () => {
   it("STAGE_PREDECESSORS matches public.stage_predecessors()", () => {
-    const src = sql("20261114000005_hardening.sql");
+    const src = latest("stage_predecessors");
     const fn = src.slice(src.indexOf("function public.stage_predecessors"), src.indexOf("end)::pipeline_stage[]"));
     const db = parseCase(fn, true);
     expect(Object.keys(db).sort()).toEqual(ALL_STAGES.map((s) => s.key).sort());
@@ -25,11 +33,12 @@ describe("UI stage rules mirror the database", () => {
   });
 
   it("ALLOWED_TARGETS matches public.allowed_target_stages()", () => {
-    const src = sql("20261114000002_security.sql");
-    const fn = src.slice(src.indexOf("function public.allowed_target_stages"), src.indexOf("create or replace function public.guard_lead_stage"));
+    const src = latest("allowed_target_stages");
+    const start = src.indexOf("function public.allowed_target_stages");
+    const fn = src.slice(start, src.indexOf("$$;", start));
     const db = parseCase(fn, false);
     for (const [agent, targets] of Object.entries(ALLOWED_TARGETS)) {
-      if (targets === "all") expect(fn).toContain(`when '${agent}'  then enum_range`);
+      if (targets === "all") expect(fn).toMatch(new RegExp(`when '${agent}'\\s+then enum_range`));
       else expect([...targets].sort()).toEqual(db[agent].sort());
     }
   });

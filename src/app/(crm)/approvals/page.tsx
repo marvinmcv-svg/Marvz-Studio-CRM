@@ -4,7 +4,7 @@ import { BatchReview } from "@/components/batch-review";
 import { AgentAvatar, Chip, Empty, PageHeader, StatusChip } from "@/components/ui";
 import { getMe, getTables } from "@/lib/data";
 import { dateTime, relTime } from "@/lib/format";
-import type { AgentCode } from "@/lib/types";
+import { ADMINS, type AgentCode } from "@/lib/types";
 
 export const metadata = { title: "Approvals" };
 
@@ -14,7 +14,7 @@ export default async function ApprovalsPage() {
   const company = new Map(t.companies.map((c) => [c.id, c]));
   const lead = new Map(t.leads.map((l) => [l.id, l]));
   const agent = new Map(t.agents.map((a) => [a.code, a]));
-  const canDecide = !me?.demo && (me?.code === "letty" || me?.code === "top_g");
+  const canDecide = !me?.demo && ADMINS.includes(me?.code ?? "");
 
   const batches = [...t.approval_batches].sort((a, b) =>
     (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1) || b.submitted_at.localeCompare(a.submitted_at));

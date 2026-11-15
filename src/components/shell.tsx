@@ -132,7 +132,7 @@ export function Shell({
         </span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px]">{me.name}</div>
-          <div className="truncate text-[11px] text-ink-3">{demo ? "Demo mode · read-only" : me.code === "letty" ? "Owner" : me.code}</div>
+          <div className="truncate text-[11px] text-ink-3">{demo ? "Demo mode · read-only" : me.code === "letty" ? "Owner" : me.code === "marvin" ? "Admin" : me.code}</div>
         </div>
         {!demo && (
           <form action="/auth/signout" method="post">

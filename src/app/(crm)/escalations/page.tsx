@@ -5,6 +5,7 @@ import { AgentAvatar, Empty, PageHeader, StatusChip, Tabs } from "@/components/u
 import { getMe, getTables } from "@/lib/data";
 import { dateTime, relTime } from "@/lib/format";
 import type { Escalation } from "@/lib/types";
+import { ADMINS } from "@/lib/types";
 
 export const metadata = { title: "Escalations" };
 
@@ -18,7 +19,7 @@ export default async function EscalationsPage({ searchParams }: { searchParams: 
   const company = new Map(t.companies.map((c) => [c.id, c]));
   const lead = new Map(t.leads.map((l) => [l.id, l]));
   const project = new Map(t.projects.map((p) => [p.id, p]));
-  const canAct = !me?.demo && (me?.code === "letty" || me?.code === "top_g");
+  const canAct = !me?.demo && ADMINS.includes(me?.code ?? "");
 
   const groups: Record<string, Escalation[]> = {
     letty: t.escalations.filter((e) => e.status === "with_letty"),

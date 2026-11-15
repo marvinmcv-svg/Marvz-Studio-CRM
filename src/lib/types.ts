@@ -3,7 +3,9 @@ export type Stage =
   | "discovery" | "proposal" | "signed" | "in_delivery" | "delivered" | "care_plan"
   | "lost" | "do_not_contact";
 
-export type AgentCode = "letty" | "top_g" | "hunter" | "jordan" | "quinn" | "dana";
+export type AgentCode = "letty" | "marvin" | "top_g" | "hunter" | "jordan" | "quinn" | "dana";
+/** Admins: full access (mirrors public.is_admin()). */
+export const ADMINS: readonly string[] = ["letty", "marvin", "top_g"];
 export type Channel = "whatsapp" | "email" | "instagram";
 
 export interface Agent {

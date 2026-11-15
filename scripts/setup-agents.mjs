@@ -62,8 +62,8 @@ const unknown = [...(revoke ?? []), ...(activate ?? []), ...(rotate ?? [])].filt
 if (unknown.length) { console.error(`Unknown agent code(s): ${unknown.join(", ")}`); process.exit(1); }
 
 if (revoke || activate) {
-  if (revoke?.includes("letty")) {
-    console.error("Refusing to deactivate letty: that would lock the owner out of the CRM. Do it in the SQL editor if you really mean it.");
+  if (revoke?.some((c) => c === "letty" || c === "marvin")) {
+    console.error("Refusing to deactivate an owner (letty, marvin): that could lock you out of the CRM. Do it in the SQL editor if you really mean it.");
     process.exit(1);
   }
   for (const [targets, active] of [[revoke, false], [activate, true]]) {

@@ -1,6 +1,6 @@
 # Squad CRM
 
-Squad CRM is the internal CRM for **Marvz Studio** (web design, web apps and AI assistants; Santa Cruz, Bolivia). It is used by Letty (the owner) and five Grokbot AI agents: **Top G, Hunter, Jordan, Quinn and Dana**.
+Squad CRM is the internal CRM for **Marvz Studio** (web design, web apps and AI assistants; Santa Cruz, Bolivia). It is used by Letty (the owner), Marvin (admin) and five Grokbot AI agents: **Top G, Hunter, Jordan, Quinn and Dana**.
 
 It is built on Next.js 16 and Supabase (Postgres, Auth, Row Level Security and Realtime), and deploys to Vercel. The UI is dark-mode, dense and keyboard-driven, and works on a phone.
 
@@ -70,7 +70,7 @@ Demo mode has no sign-in, so a **production** build (`next start`, Vercel) refus
    npx supabase link --project-ref <ref>
    npx supabase db push
    ```
-   or by pasting the six files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue; the fifth and sixth add the hardening rules.
+   or by pasting the seven files, in order, into **SQL Editor**. The fourth file seeds the team and the full price catalogue; the fifth and sixth add the hardening rules; the seventh adds Marvin as an admin.
 3. Optional demo data: run `supabase/seed.sql` in the SQL editor. Remove it before going live with `supabase/demo_cleanup.sql`, which keeps the team and catalogue.
 4. Check **Database → Publications → supabase_realtime** includes `activity_log`. The migration adds it, which drives live refresh.
 5. **Turn off public sign-ups** (Authentication → Sign In / Providers → *Allow new users to sign up* = off). Strangers who sign up still can't see anything (every policy and RPC requires a squad member, and the tests cover this), but there is no reason to allow it.
@@ -148,7 +148,9 @@ Content-Type: application/json
   "p_market": "US", "p_channel": "whatsapp", "p_source": "Google Maps" }
 ```
 
-**Suggested agent instructions** (paste into each Grokbot agent's system prompt):
+**Master prompt:** a complete, ready-to-paste prompt for the Grok coordinator (connection, sign-in, rules, bulk lead upload) is in **[docs/GROK_MASTER_PROMPT.md](docs/GROK_MASTER_PROMPT.md)**.
+
+**Short version** (paste into each Grokbot agent's system prompt):
 
 > You work in Squad CRM through Supabase RPC functions only. Call exactly one function per step, pass arguments by name (`p_…`), and read the `status` and `message` in every response. Never invent prices: use `quote_deal` and `create_deal`, which price from the catalogue. If a call is refused, do not work around it. Fix the input or call `raise_escalation` with a proposed action.
 
