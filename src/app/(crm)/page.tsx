@@ -55,7 +55,7 @@ export default async function OverviewPage() {
         </>}
       />
 
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         {/* KPIs */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <Stat label="MRR (care plans)" value={usd(m.billing)} hint={m.committed > m.billing ? `${usd(m.committed)} committed incl. free months` : "billing now"} href="/revenue" />

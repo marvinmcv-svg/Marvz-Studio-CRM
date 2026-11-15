@@ -3,7 +3,7 @@ import { Empty } from "@/components/ui";
 
 export default function CrmNotFound() {
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-8">
       <div className="card">
         <Empty title="Not found">
           This record doesn&apos;t exist, was removed, or your role can&apos;t see it.{" "}

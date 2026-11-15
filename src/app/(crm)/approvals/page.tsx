@@ -31,7 +31,7 @@ export default async function ApprovalsPage() {
     <div>
       <PageHeader title="Outreach approvals" icon={<CheckCheck size={18} className="text-ink-3" />}
         subtitle="Jordan batches drafts → Letty approves (here or in Grokbot) → only approved drafts can be sent" />
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         {batches.length === 0 && <div className="card"><Empty title="No batches yet" /></div>}
         {batches.map((b) => {
           const drafts = t.outreach_drafts.filter((d) => d.batch_id === b.id);

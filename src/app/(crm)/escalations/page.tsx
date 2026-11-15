@@ -38,7 +38,7 @@ export default async function EscalationsPage({ searchParams }: { searchParams: 
         { key: "letty", label: "Waiting on Letty", href: "/escalations?tab=letty", count: groups.letty.length },
         { key: "closed", label: "Resolved", href: "/escalations?tab=closed", count: groups.closed.length },
       ]} />
-      <div className="grid gap-3 p-4 md:p-6">
+      <div className="grid gap-3 p-4 md:p-8">
         {list.length === 0 && <div className="card"><Empty title="Nothing here" icon={<AlertTriangle />}>No escalations in this view.</Empty></div>}
         {list.map((e) => {
           const l = e.lead_id ? lead.get(e.lead_id) : null;

@@ -22,7 +22,7 @@ export default async function ProjectsPage() {
     <div>
       <PageHeader title="Projects" icon={<FolderKanban size={18} className="text-ink-3" />}
         subtitle="Dana's handoff plans: milestones, deliverables, what the client owes, slip warnings" />
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         <section className="card">
           <div className="card-h"><span className="card-t">Capacity · {limit} new projects / month</span></div>
           <div className="grid grid-cols-2 gap-4 p-4 lg:grid-cols-4">

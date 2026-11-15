@@ -14,7 +14,7 @@ export default async function GrowthPage() {
   return (
     <div>
       <PageHeader title="Testimonials & referrals" icon={<HeartHandshake size={18} className="text-ink-3" />} subtitle="Dana asks every delivered client for a testimonial and a referral" />
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Stat label="Testimonials received" value={received.length} hint={`${t.testimonials.length} asked/queued`} />
           <Stat label="Avg rating" value={received.length ? (received.reduce((a, x) => a + (x.rating ?? 0), 0) / received.length).toFixed(1) + " ★" : "—"} />

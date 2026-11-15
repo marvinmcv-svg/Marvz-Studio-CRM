@@ -20,7 +20,7 @@ export default async function CataloguePage({ searchParams }: { searchParams: Pr
     <div>
       <PageHeader title="Price catalogue" icon={<Package size={18} className="text-ink-3" />}
         subtitle={<span className="inline-flex items-center gap-1.5"><Lock size={12} /> Read-only for agents · only Letty edits (enforced by RLS) · agents quote exclusively from here</span>} />
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-line px-4 py-2.5 md:px-6">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-line px-4 py-2.5 md:px-8">
         <span className="mr-1 text-[12px] text-ink-3">Market</span>
         {markets.map((x) => (
           <Link key={x.code} href={`/catalogue?market=${x.code}`} className={clsx("btn-ghost h-7", x.code === m.code && "bg-panel-3 text-ink")}>
@@ -29,7 +29,7 @@ export default async function CataloguePage({ searchParams }: { searchParams: Pr
         ))}
       </div>
 
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {t.catalogue_packages.sort((a, b) => a.sort - b.sort).map((p) => {
             const local = t.catalogue_package_prices.find((x) => x.package_code === p.code && x.market_code === m.code)?.price ?? marketPrice(p.price_usd, m);

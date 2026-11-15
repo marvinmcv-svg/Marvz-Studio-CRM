@@ -32,7 +32,7 @@ export function Board({ columns, readOnly, agent }: { columns: BoardColumn[]; re
   const check = (to: Stage) => (drag ? canMoveStage(agent, drag.stage, to) : null);
 
   return (
-    <div className="flex h-[calc(100dvh-170px)] min-h-[420px] gap-2.5 overflow-x-auto px-4 py-4 md:px-6">
+    <div className="flex h-[calc(100dvh-170px)] min-h-[420px] gap-2.5 overflow-x-auto px-4 py-4 md:px-8">
       {columns.map((col) => (
         <section key={col.key}
           onDragOver={(e) => { if (drag && check(col.key)?.ok) { e.preventDefault(); setOver(col.key); } }}

@@ -84,7 +84,7 @@ export function LeadForm({ markets, services, existing, demo }: { markets: Opt[]
   );
 
   return (
-    <form className="grid gap-4 p-4 md:p-6 xl:grid-cols-[1fr_340px]" onSubmit={(e) => { e.preventDefault(); submit(false); }}>
+    <form className="grid gap-4 p-4 md:p-8 xl:grid-cols-[1fr_340px]" onSubmit={(e) => { e.preventDefault(); submit(false); }}>
       <div className="grid gap-4">
         <section className="card p-4">
           <div className="card-t mb-3">Business & contact</div>

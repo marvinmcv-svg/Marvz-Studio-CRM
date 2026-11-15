@@ -15,7 +15,7 @@ export default async function DncPage() {
     <div>
       <PageHeader title="Do-not-contact list" icon={<Ban size={18} className="text-ink-3" />}
         subtitle="create_lead refuses anything matching a business name, email, phone, domain or Instagram handle on this list (accents and formatting ignored)" />
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         <section className="card"><div className="card-h"><span className="card-t">Add entry</span></div><DncForm disabled={!!me?.demo} /></section>
         <section className="card overflow-x-auto">
           {t.do_not_contact.length === 0 ? <Empty title="List is empty" /> : (

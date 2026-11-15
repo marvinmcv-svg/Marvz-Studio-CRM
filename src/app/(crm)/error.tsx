@@ -8,7 +8,7 @@ import { useEffect } from "react";
 export default function CrmError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => { console.error(error); }, [error]);
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-8">
       <div className="card mx-auto max-w-[520px] p-6">
         <div className="flex items-center gap-2 font-semibold"><AlertTriangle size={16} className="text-amber-300" /> This page couldn&apos;t load</div>
         <p className="mt-2 text-[13px] text-ink-2">

@@ -22,7 +22,7 @@ export default async function DealsPage() {
       <PageHeader title="Deals" icon={<Calculator size={18} className="text-ink-3" />}
         subtitle="Quotes built only from the catalogue: package + add-ons + market + payment plan + rush"
         actions={<Link href="/deals/new" className="btn-primary"><Calculator size={14} /> Deal builder</Link>} />
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Stat label="Open pipeline" value={usd(s.pipelineValue)} hint={`${s.open} open`} />
           <Stat label="Won (all time)" value={usd(s.wonValue)} hint={`${s.won} signed`} tone="good" />

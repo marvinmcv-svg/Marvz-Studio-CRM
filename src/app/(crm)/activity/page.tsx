@@ -19,7 +19,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
     <div>
       <PageHeader title="Activity log" icon={<Activity size={18} className="text-ink-3" />}
         subtitle={`${rows.length} events · append-only — every agent call writes here and cannot be edited`} />
-      <div className="flex flex-wrap items-center gap-1.5 border-b border-line px-4 py-2.5 md:px-6">
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-line px-4 py-2.5 md:px-8">
         <Link href={href({ agent: undefined })} className={clsx("btn-ghost h-7", !sp.agent && "bg-panel-3 text-ink")}>Everyone</Link>
         {t.agents.map((a) => (
           <Link key={a.code} href={href({ agent: a.code })} className={clsx("btn-ghost h-7", sp.agent === a.code && "bg-panel-3 text-ink")}>
@@ -35,7 +35,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
           <button className="btn ml-1.5 h-8">Apply</button>
         </form>
       </div>
-      <div className="p-4 md:p-6">
+      <div className="p-4 md:p-8">
         <div className="card py-1"><ActivityFeed items={rows.slice(0, limit)} agents={t.agents} /></div>
         {rows.length > limit && (
           <div className="mt-3 text-center"><Link href={href({ limit: String(limit + 200) })} className="btn">Load more</Link></div>

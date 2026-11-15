@@ -19,7 +19,7 @@ export default async function CarePage() {
   return (
     <div>
       <PageHeader title="Care plans" icon={<LifeBuoy size={18} className="text-ink-3" />} subtitle={`Renewals and hours used this month · overage billed at ${usd(rate)}/h`} />
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Stat label="Active plans" value={subs.filter((s) => s.status === "active").length} />
           <Stat label="MRR" value={usd(m.billing)} hint={`${usd(m.committed)} committed`} />

@@ -13,7 +13,7 @@ export default async function TeamPage() {
     <div>
       <PageHeader title="Team & agent API" icon={<Users size={18} className="text-ink-3" />}
         subtitle="Each Grokbot agent signs in as its own Supabase user, so Row Level Security knows who it is. One RPC per step; every call is logged." />
-      <div className="grid gap-3 p-4 md:grid-cols-2 md:p-6 xl:grid-cols-3">
+      <div className="grid gap-3 p-4 md:grid-cols-2 md:p-8 xl:grid-cols-3">
         {t.agents.map((a) => {
           const acts = t.activity_log.filter((x) => x.agent_code === a.code);
           return (

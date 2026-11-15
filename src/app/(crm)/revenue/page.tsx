@@ -58,7 +58,7 @@ export default async function RevenuePage() {
   return (
     <div>
       <PageHeader title="Revenue" icon={<TrendingUp size={18} className="text-ink-3" />} subtitle="All figures in USD (non-USD deals converted with the catalogue market factor)" />
-      <div className="grid gap-4 p-4 md:p-6">
+      <div className="grid gap-4 p-4 md:p-8">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <Stat label="MRR · care plans" value={usd(m.billing)} hint={`ARR run-rate ${usd(m.billing * 12)}`} />
           <Stat label="Committed MRR" value={usd(m.committed)} hint="incl. plans in free months" />

@@ -51,10 +51,10 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
   });
 
   return (
-    <div className="grid gap-4 p-4 md:p-6 xl:grid-cols-[1fr_380px]">
-      <div className="grid content-start gap-4">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 p-4 md:p-8 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] content-start gap-4">
         <section className="card p-4">
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+          <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <div>
               <label className="label" htmlFor="lead">Lead</label>
               <select id="lead" className="input" value={leadId} onChange={(e) => pickLead(e.target.value)}>
@@ -63,11 +63,11 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
               </select>
             </div>
             <div>
-              <label className="label">Market</label>
-              <div className="flex flex-wrap rounded-lg border border-line-2 p-0.5">
+              <div className="label" id="market-label">Market</div>
+              <div className="segmented" role="radiogroup" aria-labelledby="market-label">
                 {cat.markets.map((x) => (
-                  <button key={x.code} onClick={() => setMarket(x.code)}
-                    className={clsx("h-7 rounded-md px-2.5 text-[12px]", x.code === market ? "bg-panel-3 text-ink" : "text-ink-3 hover:text-ink-2")}>{x.code}</button>
+                  <button key={x.code} onClick={() => setMarket(x.code)} role="radio" aria-checked={x.code === market}
+                    data-active={x.code === market} className="segment px-3">{x.code}</button>
                 ))}
               </div>
             </div>
@@ -81,11 +81,12 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
               const price = p ? (cat.prices.find((x) => x.package_code === p.code && x.market_code === market)?.price ?? marketPrice(p.price_usd, m)) : 0;
               const active = (p?.code ?? null) === pkg;
               return (
-                <button key={p?.code ?? "none"} onClick={() => setPkg(p?.code ?? null)}
-                  className={clsx("rounded-lg border p-3 text-left transition-colors", active ? "border-accent/70 bg-accent/10" : "border-line-2 hover:bg-panel-2")}>
-                  <div className="font-medium">{p?.name ?? "Add-ons only"}</div>
-                  <div className="mt-0.5 tabular-nums text-ink-2">{p ? fmt(Number(price)) : "—"}</div>
-                  {p && <div className="mt-0.5 text-[11px] text-ink-3">{p.weeks_min}–{p.weeks_max} wks{p.included_care_months ? ` · ${p.included_care_months}mo care` : ""}</div>}
+                <button key={p?.code ?? "none"} onClick={() => setPkg(p?.code ?? null)} aria-pressed={active}
+                  className={clsx("rounded-[14px] border p-3.5 text-left transition-[background-color,box-shadow,transform] active:scale-[0.98]",
+                    active ? "border-accent bg-accent/10 shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-accent)_25%,transparent)]" : "border-line bg-panel-2 hover:bg-panel-3")}>
+                  <div className="font-semibold">{p?.name ?? "Add-ons only"}</div>
+                  <div className="mt-0.5 text-[15px] tabular-nums text-ink-2">{p ? fmt(Number(price)) : "—"}</div>
+                  {p && <div className="mt-0.5 text-[12px] text-ink-3">{p.weeks_min}–{p.weeks_max} wks{p.included_care_months ? ` · ${p.included_care_months}mo care` : ""}</div>}
                 </button>
               );
             })}
@@ -98,18 +99,18 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
             {cat.addons.sort((a, b) => a.sort - b.sort).map((a) => {
               const qty = addons[a.code] ?? 0;
               return (
-                <div key={a.code} className={clsx("flex items-center gap-2 rounded-lg border px-2.5 py-2", qty ? "border-accent/50 bg-accent/[0.07]" : "border-line")}>
-                  <button className="min-w-0 flex-1 text-left" onClick={() => setAddons((x) => { const n = { ...x }; if (n[a.code]) delete n[a.code]; else n[a.code] = 1; return n; })}>
-                    <div className="truncate text-[13px]">{a.name}</div>
-                    <div className="text-[11px] tabular-nums text-ink-3">
+                <div key={a.code} className={clsx("flex items-center gap-2 rounded-[12px] border px-3 py-2.5 transition-colors", qty ? "border-accent/60 bg-accent/10" : "border-line bg-panel-2 hover:bg-panel-3")}>
+                  <button className="min-w-0 flex-1 text-left" aria-pressed={qty > 0} onClick={() => setAddons((x) => { const n = { ...x }; if (n[a.code]) delete n[a.code]; else n[a.code] = 1; return n; })}>
+                    <div className="truncate text-[14px]">{a.name}</div>
+                    <div className="text-[12px] tabular-nums text-ink-3">
                       {a.price_usd ? fmt(marketPrice(a.price_usd, m)) : ""}{a.monthly_usd ? `${a.price_usd ? " + " : ""}${fmt(marketPrice(a.monthly_usd, m))}/mo` : ""}{a.per_unit && ` / ${a.unit_label}`}
                     </div>
                   </button>
                   {a.per_unit && qty > 0 && (
                     <div className="flex items-center gap-1">
-                      <button className="btn-ghost h-6 px-1" onClick={() => setAddons((x) => ({ ...x, [a.code]: Math.max(1, qty - 1) }))} aria-label="Less"><Minus size={12} /></button>
+                      <button className="btn-ghost h-8 w-8 px-0" onClick={() => setAddons((x) => ({ ...x, [a.code]: Math.max(1, qty - 1) }))} aria-label={`Fewer ${a.name}`}><Minus size={14} /></button>
                       <span className="w-4 text-center tabular-nums">{qty}</span>
-                      <button className="btn-ghost h-6 px-1" onClick={() => setAddons((x) => ({ ...x, [a.code]: qty + 1 }))} aria-label="More"><Plus size={12} /></button>
+                      <button className="btn-ghost h-8 w-8 px-0" onClick={() => setAddons((x) => ({ ...x, [a.code]: qty + 1 }))} aria-label={`More ${a.name}`}><Plus size={14} /></button>
                     </div>
                   )}
                 </div>
@@ -118,18 +119,19 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
           </div>
         </section>
 
-        <section className="card grid gap-4 p-4 sm:grid-cols-3">
+        <section className="card grid grid-cols-[minmax(0,1fr)] gap-4 p-4 sm:grid-cols-3">
           <div>
-            <div className="label">Payment plan</div>
-            <div className="flex rounded-lg border border-line-2 p-0.5">
+            <div className="label" id="plan-label">Payment plan</div>
+            <div className="segmented w-full" role="radiogroup" aria-labelledby="plan-label">
               {(["50_50", "40_30_30"] as const).map((p) => (
-                <button key={p} onClick={() => setPlan(p)} className={clsx("h-7 flex-1 rounded-md text-[12px]", plan === p ? "bg-panel-3 text-ink" : "text-ink-3")}>{p.replace(/_/g, "/")}</button>
+                <button key={p} onClick={() => setPlan(p)} role="radio" aria-checked={plan === p} data-active={plan === p}
+                  className="segment flex-1 justify-center">{p.replace(/_/g, "/")}</button>
               ))}
             </div>
           </div>
           <div>
             <div className="label">Delivery</div>
-            <button onClick={() => setRush(!rush)} className={clsx("flex h-8 w-full items-center justify-center gap-1.5 rounded-lg border text-[12px]", rush ? "border-amber-400/50 bg-amber-400/10 text-amber-300" : "border-line-2 text-ink-3")}>
+            <button onClick={() => setRush(!rush)} aria-pressed={rush} className={clsx("flex h-9 w-full items-center justify-center gap-1.5 rounded-full border text-[13px] font-medium transition-colors", rush ? "border-amber-400/60 bg-amber-400/15 text-amber-300" : "border-line bg-panel-2 text-ink-2 hover:bg-panel-3")}>
               <Zap size={13} /> Rush (+{rushPercent}%) {rush ? "on" : "off"}
             </button>
           </div>
@@ -158,7 +160,7 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
           {rush && <li className="flex px-4 py-2 text-amber-300"><span className="flex-1">Rush +{rushPercent}%</span><span className="tabular-nums">{fmt(q.rushFee)}</span></li>}
         </ul>
         <div className="border-t border-line px-4 py-3">
-          <div className="flex items-baseline justify-between"><span className="text-ink-2">One-off total</span><span className="text-[22px] font-semibold tracking-tight tabular-nums">{fmt(q.total)}</span></div>
+          <div className="flex items-baseline justify-between"><span className="text-ink-2">One-off total</span><span data-testid="quote-total" className="text-[28px] font-bold tracking-[-0.02em] tabular-nums">{fmt(q.total)}</span></div>
           {q.monthly > 0 && <div className="flex justify-between text-ink-2"><span>Recurring</span><span className="tabular-nums">{fmt(q.monthly)}/mo</span></div>}
           {q.currency !== "USD" && <div className="flex justify-between text-[12px] text-ink-3"><span>USD equivalent</span><span className="tabular-nums">{money(q.totalUsd)}</span></div>}
           {q.included.length > 0 && <div className="mt-2 text-[12px] text-emerald-300">Included: {q.included.join(" · ")}</div>}
@@ -167,7 +169,7 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
           <div className="card-t mb-2">Payment milestones</div>
           {q.schedule.map((s, i) => (
             <div key={i} className="flex items-center gap-2 py-1">
-              <span className="flex size-5 items-center justify-center rounded-full bg-panel-3 text-[10px] tabular-nums">{i + 1}</span>
+              <span className="flex size-6 items-center justify-center rounded-full bg-accent/15 text-[11px] font-semibold tabular-nums text-accent">{i + 1}</span>
               <span className="flex-1">{s.label}</span>
               <span className="text-[12px] text-ink-3">{s.percent}%</span>
               <span className="w-[86px] text-right tabular-nums">{fmt(s.amount)}</span>

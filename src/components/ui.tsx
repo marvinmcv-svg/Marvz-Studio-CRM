@@ -5,7 +5,7 @@ import { stageMeta, type Tone } from "@/lib/constants";
 import type { Agent, Stage } from "@/lib/types";
 
 const TONES: Record<Tone, string> = {
-  slate: "bg-white/[0.06] text-ink-2 ring-white/10",
+  slate: "bg-ink/[0.06] text-ink-2 ring-ink/10",
   blue: "bg-sky-400/10 text-sky-300 ring-sky-400/20",
   violet: "bg-violet-400/10 text-violet-300 ring-violet-400/20",
   amber: "bg-amber-400/10 text-amber-300 ring-amber-400/20",
@@ -21,7 +21,7 @@ const DOTS: Record<Tone, string> = {
 
 export function Chip({ tone = "slate", children, dot = false, className }: { tone?: Tone; children: ReactNode; dot?: boolean; className?: string }) {
   return (
-    <span className={clsx("inline-flex h-5 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-1.5 text-[11px] font-medium ring-1 ring-inset", TONES[tone], className)}>
+    <span className={clsx("inline-flex h-[22px] shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2 text-[11.5px] font-medium ring-1 ring-inset", TONES[tone], className)}>
       {dot && <span className={clsx("size-1.5 rounded-full", DOTS[tone])} />}
       {children}
     </span>
@@ -73,13 +73,13 @@ export function AgentAvatar({ agent, size = 20, withName = false }: { agent?: Pi
 
 export function PageHeader({ title, subtitle, actions, icon }: { title: string; subtitle?: ReactNode; actions?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line px-4 pb-4 pt-5 md:px-6">
+    <div className="flex flex-wrap items-end justify-between gap-3 px-4 pb-3 pt-6 md:px-8 md:pt-8">
       <div className="min-w-0">
-        <h1 className="flex items-center gap-2 text-[18px] font-semibold tracking-tight">
+        <h1 className="flex items-center gap-2.5 text-[28px] font-bold leading-tight tracking-[-0.022em] md:text-[32px]">
           {icon}
           {title}
         </h1>
-        {subtitle && <p className="mt-0.5 text-ink-3">{subtitle}</p>}
+        {subtitle && <p className="mt-1 max-w-3xl text-[14px] text-ink-3">{subtitle}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </div>
@@ -88,9 +88,9 @@ export function PageHeader({ title, subtitle, actions, icon }: { title: string; 
 
 export function Stat({ label, value, hint, tone, href }: { label: string; value: ReactNode; hint?: ReactNode; tone?: "warn" | "bad" | "good"; href?: string }) {
   const body = (
-    <div className={clsx("card h-full px-4 py-3.5", href && "transition-colors hover:border-line-2 hover:bg-panel-2/60")}>
-      <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-ink-3">{label}</div>
-      <div className={clsx("mt-1.5 text-[22px] font-semibold tracking-tight tabular-nums",
+    <div className={clsx("card h-full px-4 py-4", href && "transition-[transform,background-color] duration-200 hover:-translate-y-0.5 hover:bg-panel-2")}>
+      <div className="text-[12px] font-medium text-ink-3">{label}</div>
+      <div className={clsx("mt-1 text-[26px] font-semibold tracking-[-0.02em] tabular-nums",
         tone === "bad" && "text-rose-300", tone === "warn" && "text-amber-300", tone === "good" && "text-emerald-300")}>{value}</div>
       {hint && <div className="mt-0.5 truncate text-[12px] text-ink-3">{hint}</div>}
     </div>
@@ -111,7 +111,7 @@ export function Empty({ title, children, icon }: { title: string; children?: Rea
 export function Meter({ value, max, tone = "accent" }: { value: number; max: number; tone?: "accent" | "warn" | "bad" }) {
   const pct = max ? Math.min(100, (value / max) * 100) : 0;
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-panel-3" role="meter" aria-valuenow={value} aria-valuemax={max}>
+    <div className="h-2 w-full overflow-hidden rounded-full bg-panel-3" role="meter" aria-valuenow={value} aria-valuemax={max}>
       <div className={clsx("h-full rounded-full", tone === "accent" && "bg-accent", tone === "warn" && "bg-amber-400", tone === "bad" && "bg-rose-400")} style={{ width: `${pct}%` }} />
     </div>
   );
@@ -128,15 +128,16 @@ export function Field({ label, children }: { label: string; children: ReactNode 
 
 export function Tabs({ tabs, active }: { tabs: { key: string; label: string; href: string; count?: number }[]; active: string }) {
   return (
-    <div className="flex gap-1 overflow-x-auto border-b border-line px-4 md:px-6">
-      {tabs.map((t) => (
-        <Link key={t.key} href={t.href} scroll={false}
-          className={clsx("-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-2 py-2.5 text-[13px]",
-            t.key === active ? "border-accent text-ink" : "border-transparent text-ink-3 hover:text-ink-2")}>
-          {t.label}
-          {t.count != null && <span className="rounded bg-panel-3 px-1 text-[11px] tabular-nums text-ink-2">{t.count}</span>}
-        </Link>
-      ))}
+    <div className="px-4 pb-1 pt-1 md:px-8">
+      <div className="segmented" role="tablist">
+        {tabs.map((t) => (
+          <Link key={t.key} href={t.href} scroll={false} role="tab" aria-selected={t.key === active}
+            data-active={t.key === active} className="segment">
+            {t.label}
+            {t.count != null && <span className="rounded-full bg-ink/[0.08] px-1.5 text-[11px] tabular-nums text-ink-2">{t.count}</span>}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

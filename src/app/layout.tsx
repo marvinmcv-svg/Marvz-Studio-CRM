@@ -1,15 +1,37 @@
 import type { Metadata, Viewport } from "next";
+import { themeBootScript } from "@/components/app-chrome";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: { default: "Squad CRM", template: "%s · Squad CRM" },
-  description: "Marvz Studio internal CRM for Letty and the Grokbot agent squad.",
+  description: "Marvz Studio internal CRM for Letty, Marvin and the Grokbot agent squad.",
+  applicationName: "Squad CRM",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Squad CRM", statusBarStyle: "black-translucent" },
+  formatDetection: { telephone: false },
+  icons: {
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }, { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
 };
-export const viewport: Viewport = { themeColor: "#0a0a0d", width: "device-width", initialScale: 1 };
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+  ],
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* applies the saved Light/Dark choice before first paint */}
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
+      </head>
       <body>{children}</body>
     </html>
   );

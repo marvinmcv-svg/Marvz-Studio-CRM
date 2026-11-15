@@ -120,7 +120,7 @@ export default async function LeadPage({ params, searchParams }: { params: Promi
       {/* Right: tabs */}
       <section className="min-w-0 flex-1">
         <Tabs tabs={tabs} active={tab} />
-        <div className="p-4 md:p-6">
+        <div className="p-4 md:p-8">
           {tab === "activity" && <div className="card py-1"><ActivityFeed items={activity} agents={t.agents} /></div>}
 
           {tab === "history" && (

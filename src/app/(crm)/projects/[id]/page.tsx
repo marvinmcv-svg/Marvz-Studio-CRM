@@ -25,11 +25,11 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
 
   return (
     <div>
-      <div className="border-b border-line px-4 py-2 md:px-6"><Link href="/projects" className="btn-ghost -ml-2 h-7"><ArrowLeft size={14} /> Projects</Link></div>
+      <div className="border-b border-line px-4 py-2 md:px-8"><Link href="/projects" className="btn-ghost -ml-2 h-7"><ArrowLeft size={14} /> Projects</Link></div>
       <PageHeader title={p.name} subtitle={`P-${p.ref} · ${company?.name} · slot ${monthLabel(p.slot_month)} · started ${shortDate(p.start_date)} · target ${shortDate(p.target_date)}`}
         actions={<><StatusChip status={ms.some(isSlipping) && p.status === "active" ? "at_risk" : p.status} />{p.lead_id && <Link className="btn" href={`/leads/${p.lead_id}`}>Lead record</Link>}</>} />
 
-      <div className="grid gap-4 p-4 md:p-6 xl:grid-cols-[1.3fr_1fr]">
+      <div className="grid gap-4 p-4 md:p-8 xl:grid-cols-[1.3fr_1fr]">
         <div className="grid content-start gap-4">
           <section className="card">
             <div className="card-h"><span className="card-t">Milestones</span><span className="text-[12px] text-ink-3">{ms.filter((m) => m.status === "done").length}/{ms.length} done</span></div>
