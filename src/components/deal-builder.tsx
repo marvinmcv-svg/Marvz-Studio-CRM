@@ -82,7 +82,7 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
               const active = (p?.code ?? null) === pkg;
               return (
                 <button key={p?.code ?? "none"} onClick={() => setPkg(p?.code ?? null)} aria-pressed={active}
-                  className={clsx("rounded-[14px] border p-3.5 text-left transition-[background-color,box-shadow,transform] active:scale-[0.98]",
+                  className={clsx("rounded-[10px] border p-3.5 text-left transition-[background-color,box-shadow,transform] active:scale-[0.98]",
                     active ? "border-accent bg-accent/10 shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-accent)_25%,transparent)]" : "border-line bg-panel-2 hover:bg-panel-3")}>
                   <div className="font-semibold">{p?.name ?? "Add-ons only"}</div>
                   <div className="mt-0.5 text-[15px] tabular-nums text-ink-2">{p ? fmt(Number(price)) : "—"}</div>
@@ -99,7 +99,7 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
             {cat.addons.sort((a, b) => a.sort - b.sort).map((a) => {
               const qty = addons[a.code] ?? 0;
               return (
-                <div key={a.code} className={clsx("flex items-center gap-2 rounded-[12px] border px-3 py-2.5 transition-colors", qty ? "border-accent/60 bg-accent/10" : "border-line bg-panel-2 hover:bg-panel-3")}>
+                <div key={a.code} className={clsx("flex items-center gap-2 rounded-[8px] border px-3 py-2.5 transition-colors", qty ? "border-accent/60 bg-accent/10" : "border-line bg-panel-2 hover:bg-panel-3")}>
                   <button className="min-w-0 flex-1 text-left" aria-pressed={qty > 0} onClick={() => setAddons((x) => { const n = { ...x }; if (n[a.code]) delete n[a.code]; else n[a.code] = 1; return n; })}>
                     <div className="truncate text-[14px]">{a.name}</div>
                     <div className="text-[12px] tabular-nums text-ink-3">
@@ -131,7 +131,7 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
           </div>
           <div>
             <div className="label">Delivery</div>
-            <button onClick={() => setRush(!rush)} aria-pressed={rush} className={clsx("flex h-9 w-full items-center justify-center gap-1.5 rounded-full border text-[13px] font-medium transition-colors", rush ? "border-amber-400/60 bg-amber-400/15 text-amber-300" : "border-line bg-panel-2 text-ink-2 hover:bg-panel-3")}>
+            <button onClick={() => setRush(!rush)} aria-pressed={rush} className={clsx("flex h-9 w-full items-center justify-center gap-1.5 rounded-[8px] border text-[13px] font-medium transition-colors", rush ? "border-amber-400/60 bg-amber-400/15 text-amber-300" : "border-line bg-panel-2 text-ink-2 hover:bg-panel-3")}>
               <Zap size={13} /> Rush (+{rushPercent}%) {rush ? "on" : "off"}
             </button>
           </div>
@@ -160,7 +160,7 @@ export function DealBuilder({ cat, leads, initialLead, demo, rushPercent, capaci
           {rush && <li className="flex px-4 py-2 text-amber-300"><span className="flex-1">Rush +{rushPercent}%</span><span className="tabular-nums">{fmt(q.rushFee)}</span></li>}
         </ul>
         <div className="border-t border-line px-4 py-3">
-          <div className="flex items-baseline justify-between"><span className="text-ink-2">One-off total</span><span data-testid="quote-total" className="text-[28px] font-bold tracking-[-0.02em] tabular-nums">{fmt(q.total)}</span></div>
+          <div className="flex items-baseline justify-between"><span className="text-ink-2">One-off total</span><span data-testid="quote-total" className="text-[26px] font-semibold tracking-[-0.03em] tabular-nums">{fmt(q.total)}</span></div>
           {q.monthly > 0 && <div className="flex justify-between text-ink-2"><span>Recurring</span><span className="tabular-nums">{fmt(q.monthly)}/mo</span></div>}
           {q.currency !== "USD" && <div className="flex justify-between text-[12px] text-ink-3"><span>USD equivalent</span><span className="tabular-nums">{money(q.totalUsd)}</span></div>}
           {q.included.length > 0 && <div className="mt-2 text-[12px] text-emerald-300">Included: {q.included.join(" · ")}</div>}

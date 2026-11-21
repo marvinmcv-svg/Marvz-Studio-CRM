@@ -40,13 +40,13 @@ export function Board({ columns, readOnly, agent }: { columns: BoardColumn[]; re
           onDragLeave={() => setOver((o) => (o === col.key ? null : o))}
           onDrop={() => { if (drag && check(col.key)?.ok) setMove({ card: drag, to: col.key }); setDrag(null); setOver(null); }}
           title={drag && drag.stage !== col.key && !check(col.key)?.ok ? (check(col.key) as { reason: string }).reason : undefined}
-          className={clsx("flex w-[272px] shrink-0 flex-col rounded-xl border bg-panel/60 transition-[colors,opacity]",
+          className={clsx("flex w-[280px] shrink-0 flex-col rounded-[10px] border bg-panel-2/35 transition-[colors,opacity]",
             over === col.key ? "border-accent/60 bg-accent/[0.04]" : "border-line",
             drag && drag.stage !== col.key && !check(col.key)?.ok && "opacity-40")}>
-          <header className="flex items-center gap-2 px-3 py-2.5">
+          <header className="flex items-center gap-2 px-3 pb-2 pt-2.5">
             <span className={clsx("size-2 rounded-full", DOT[col.tone])} />
             <span className="font-medium">{col.label}</span>
-            <span className="text-[12px] tabular-nums text-ink-3">{col.cards.length}</span>
+            <span className="rounded-[5px] bg-ink/[0.07] px-1.5 text-[11px] tabular-nums text-ink-3">{col.cards.length}</span>
             {col.total && <span className="ml-auto text-[11px] tabular-nums text-ink-3">{col.total}</span>}
           </header>
           <div className="flex flex-1 flex-col gap-1.5 overflow-y-auto px-2 pb-2">
@@ -57,7 +57,7 @@ export function Board({ columns, readOnly, agent }: { columns: BoardColumn[]; re
               <Link key={c.id} href={`/leads/${c.id}`} draggable={!readOnly}
                 onDragStart={(e) => { setDrag(c); e.dataTransfer.effectAllowed = "move"; }}
                 onDragEnd={() => { setDrag(null); setOver(null); }}
-                className={clsx("group block rounded-lg border border-line bg-panel-2 p-2.5 transition-colors hover:border-line-2 hover:bg-panel-3",
+                className={clsx("group block rounded-[8px] border border-line bg-panel p-2.5 shadow-[0_1px_2px_rgb(0_0_0/0.2)] transition-[border-color,transform] hover:-translate-y-px hover:border-line-2",
                   drag?.id === c.id && "opacity-40")}>
                 <div className="flex items-start gap-2">
                   <div className="min-w-0 flex-1">

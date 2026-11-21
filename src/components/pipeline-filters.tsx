@@ -33,24 +33,25 @@ export function PipelineFilters({ filters }: { filters: FilterDef[] }) {
   const active = filters.map((f) => f.key).filter((k) => params.get(k));
 
   return (
-    <div className="flex flex-wrap items-center gap-2 px-4 pb-3 pt-1 md:px-8">
-      <div className="relative w-full sm:w-[240px]">
-        <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-3" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, city…" aria-label="Filter leads" className="input pl-9" />
+    <div className="flex flex-wrap items-center gap-2 border-y border-line px-4 py-2.5 md:px-8">
+      <div className="relative w-full sm:w-[220px]">
+        <Search size={14} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name, city…" aria-label="Filter leads" className="input h-7 pl-8 text-[12.5px]" />
       </div>
       {/* on phones the filters scroll sideways in one row instead of stacking */}
-      <div className="-mx-4 flex w-[calc(100%+2rem)] gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:w-auto sm:flex-wrap sm:overflow-visible sm:px-0">
+      <div className="-mx-4 flex w-[calc(100%+2rem)] gap-1.5 overflow-x-auto px-4 pb-0.5 sm:order-last sm:mx-0 sm:w-auto sm:basis-full sm:flex-wrap sm:overflow-visible sm:px-0">
         {filters.map((f) => (
           <select key={f.key} value={params.get(f.key) ?? ""} onChange={(e) => set(f.key, e.target.value || null)}
             aria-label={f.label}
-            className={clsx("input w-auto max-w-[190px] shrink-0 rounded-full pr-8", params.get(f.key) && "border-accent text-accent")}>
+            className={clsx("input h-7 w-auto max-w-[170px] shrink-0 rounded-[7px] pr-7 text-[12.5px]",
+              params.get(f.key) ? "border-accent/60 bg-accent/10 text-accent-2" : "border-dashed bg-transparent text-ink-2")}>
             <option value="">{f.any}</option>
             {f.values.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         ))}
       </div>
       {active.length > 0 && (
-        <button className="btn-ghost" onClick={() => {
+        <button className="btn-ghost h-7" onClick={() => {
           const p = new URLSearchParams(params.toString());
           active.forEach((k) => p.delete(k));
           router.replace(`${pathname}?${p.toString()}`);

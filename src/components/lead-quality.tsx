@@ -32,13 +32,13 @@ function useAction() {
 
 function Msg({ result }: { result: Result }) {
   if (!result) return null;
-  return <p role="status" className={clsx("mt-2 rounded-xl px-3 py-2 text-[12.5px]", result.ok ? "bg-emerald-400/10 text-emerald-300" : "bg-rose-400/10 text-rose-300")}>{result.text}</p>;
+  return <p role="status" className={clsx("mt-2 rounded-[8px] px-3 py-2 text-[12.5px]", result.ok ? "bg-emerald-400/10 text-emerald-300" : "bg-rose-400/10 text-rose-300")}>{result.text}</p>;
 }
 
 function Dialog({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
     <div data-modal-open className="fixed inset-0 z-[70] flex items-end justify-center bg-black/35 p-3 backdrop-blur-[2px] sm:items-center" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label={title} className="float max-h-[88dvh] w-full max-w-[520px] overflow-y-auto rounded-[22px] p-5" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-label={title} className="float max-h-[88dvh] w-full max-w-[520px] overflow-y-auto rounded-[14px] p-5" onClick={(e) => e.stopPropagation()}>
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="text-[17px] font-semibold">{title}</div>
           <button className="btn-ghost -mr-2 -mt-1 h-8 w-8 px-0" onClick={onClose} aria-label="Close"><X size={16} /></button>
@@ -104,7 +104,7 @@ export function LeadQualityPanel({
         )}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className={clsx("inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12.5px] font-semibold ring-1 ring-inset",
+          <span className={clsx("inline-flex h-7 items-center gap-1.5 rounded-[7px] px-2.5 text-[12.5px] font-semibold ring-1 ring-inset",
             check === "PASS" ? "bg-emerald-400/10 text-emerald-300 ring-emerald-400/25"
               : check === "FAIL" ? "bg-rose-400/10 text-rose-300 ring-rose-400/25" : "bg-ink/[0.06] text-ink-2 ring-ink/10")}>
             <ShieldCheck size={14} /> Manual check: {check}
@@ -117,7 +117,7 @@ export function LeadQualityPanel({
         {lead.manual_check_at && (
           <p className="mt-2 text-[12px] text-ink-3">Checked {relTime(lead.manual_check_at)}{lead.manual_check_note && ` — “${lead.manual_check_note}”`}</p>
         )}
-        {lead.on_hold && <p className="mt-2 rounded-xl bg-amber-400/10 px-3 py-2 text-[12.5px] text-amber-300">On hold since {relTime(lead.held_at ?? lead.updated_at)}: {lead.hold_reason}</p>}
+        {lead.on_hold && <p className="mt-2 rounded-[8px] bg-amber-400/10 px-3 py-2 text-[12.5px] text-amber-300">On hold since {relTime(lead.held_at ?? lead.updated_at)}: {lead.hold_reason}</p>}
       </section>
 
       {/* Linked leads */}
@@ -127,14 +127,14 @@ export function LeadQualityPanel({
           <button className="btn-ghost h-8 px-2 text-accent" onClick={() => setDialog("link")}><Link2 size={14} /> Link</button>
         </div>
         {frozen.length > 0 && (
-          <p className="mb-2 flex items-start gap-2 rounded-xl bg-violet-400/10 px-3 py-2 text-[12.5px] text-violet-300">
+          <p className="mb-2 flex items-start gap-2 rounded-[8px] bg-violet-400/10 px-3 py-2 text-[12.5px] text-violet-300">
             <Lock size={14} className="mt-0.5 shrink-0" /> Frozen: screening, drafting and batching are blocked for every lead in this group until Marvin clears the link.
           </p>
         )}
         {related.length === 0 ? <p className="text-[13px] text-ink-3">No duplicate, sister or rename links.</p> : (
           <ul className="space-y-2">
             {related.map((r) => (
-              <li key={r.id + r.relation} className="rounded-xl border border-line bg-panel-2 px-3 py-2">
+              <li key={r.id + r.relation} className="rounded-[8px] border border-line bg-panel-2 px-3 py-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <a href={`/leads/${r.id}`} className="font-medium hover:text-accent">{r.name}</a>
                   <span className="text-[12px] text-ink-3">{r.code}</span>

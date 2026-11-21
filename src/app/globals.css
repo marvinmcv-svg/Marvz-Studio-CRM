@@ -1,105 +1,118 @@
 @import "tailwindcss";
 
 /*
- * Squad CRM — Apple-style glass design.
- * System font (San Francisco on Apple devices), system-blue accent, translucent
- * "material" surfaces over a soft colour backdrop, large titles, pill controls.
- * Follows the device's light/dark setting; html[data-theme] forces one.
- * Colours are tokens, so every component switches theme automatically.
+ * Squad CRM — "command center" design system.
+ * Dark-first, near-black neutrals, hairline borders, crisp Geist type, an electric
+ * violet accent for agent/AI moments. Light mode is a clean paper theme.
+ * Colours are tokens, so every component switches theme automatically;
+ * html[data-theme] forces one, otherwise the device setting wins.
  */
 @theme {
   /* dark (default) */
-  --color-bg: #000000;
-  --color-panel: rgb(28 28 30 / 0.72);
-  --color-panel-2: rgb(44 44 46 / 0.72);
-  --color-panel-3: rgb(58 58 60 / 0.78);
-  --color-solid: #1c1c1e;
-  --color-line: rgb(255 255 255 / 0.09);
-  --color-line-2: rgb(255 255 255 / 0.15);
-  --color-ink: #f5f5f7;
-  --color-ink-2: rgb(235 235 245 / 0.72);
-  --color-ink-3: rgb(235 235 245 / 0.5);
-  --color-accent: #0a84ff;
-  --color-accent-2: #409cff;
+  --color-bg: #08080a;
+  --color-sidebar: #0b0b0e;
+  --color-panel: #111114;
+  --color-panel-2: #17171b;
+  --color-panel-3: #202026;
+  --color-solid: #111114;
+  --color-line: rgb(255 255 255 / 0.07);
+  --color-line-2: rgb(255 255 255 / 0.12);
+  --color-ink: #ededef;
+  --color-ink-2: #a1a1aa;
+  --color-ink-3: #6e6e78;
+  --color-accent: #7c5cff;
+  --color-accent-2: #a594ff;
   --color-accent-ink: #ffffff;
+  --color-glow: #22d3ee;
 
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Inter", "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-geist-sans), "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
-  --radius-card: 18px;
-  --shadow-glass: 0 1px 0 0 rgb(255 255 255 / 0.06) inset, 0 8px 32px -12px rgb(0 0 0 / 0.6);
-  --shadow-float: 0 1px 0 0 rgb(255 255 255 / 0.08) inset, 0 24px 64px -16px rgb(0 0 0 / 0.75);
-  --backdrop-a: rgb(10 132 255 / 0.22);
-  --backdrop-b: rgb(191 90 242 / 0.16);
-  --backdrop-c: rgb(48 209 88 / 0.08);
+  --radius-card: 12px;
+  --shadow-glass: 0 1px 0 0 rgb(255 255 255 / 0.035) inset, 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-float: 0 0 0 1px rgb(255 255 255 / 0.06), 0 24px 80px -12px rgb(0 0 0 / 0.85), 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --hero-glow: rgb(124 92 255 / 0.16);
+  --hero-glow-2: rgb(34 211 238 / 0.07);
+
+  --animate-pulse-dot: pulse-dot 2s ease-in-out infinite;
+  --animate-fade-up: fade-up 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, currentColor 55%, transparent); }
+    50% { box-shadow: 0 0 0 4px color-mix(in oklab, currentColor 0%, transparent); }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
 }
 
 /* Light appearance: the system setting, unless the user forced dark */
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     color-scheme: light;
-    --color-bg: #f2f2f7;
-    --color-panel: rgb(255 255 255 / 0.72);
-    --color-panel-2: rgb(255 255 255 / 0.85);
-    --color-panel-3: rgb(229 229 234 / 0.9);
+    --color-bg: #fafafa;
+    --color-sidebar: #f4f4f5;
+    --color-panel: #ffffff;
+    --color-panel-2: #f4f4f5;
+    --color-panel-3: #e9e9ec;
     --color-solid: #ffffff;
-    --color-line: rgb(60 60 67 / 0.12);
-    --color-line-2: rgb(60 60 67 / 0.2);
-    --color-ink: #1d1d1f;
-    --color-ink-2: rgb(60 60 67 / 0.8);
-    --color-ink-3: rgb(60 60 67 / 0.56);
-    --color-accent: #007aff;
-    --color-accent-2: #0062cc;
+    --color-line: rgb(9 9 11 / 0.08);
+    --color-line-2: rgb(9 9 11 / 0.14);
+    --color-ink: #09090b;
+    --color-ink-2: #52525b;
+    --color-ink-3: #85858f;
+    --color-accent: #6d4aff;
+    --color-accent-2: #5a36f0;
     --color-accent-ink: #ffffff;
-    --shadow-glass: 0 1px 0 0 rgb(255 255 255 / 0.8) inset, 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 28px -12px rgb(0 0 0 / 0.14);
-    --shadow-float: 0 1px 0 0 rgb(255 255 255 / 0.9) inset, 0 24px 64px -18px rgb(0 0 0 / 0.28);
-    --backdrop-a: rgb(0 122 255 / 0.16);
-    --backdrop-b: rgb(175 82 222 / 0.12);
-    --backdrop-c: rgb(52 199 89 / 0.08);
-    /* status colours: readable on light glass */
-    --color-rose-200: #c41e3a;
-    --color-rose-300: #d70015;
-    --color-emerald-200: #1f7a35;
-    --color-emerald-300: #248a3d;
-    --color-amber-200: #a05a00;
-    --color-amber-300: #b25000;
-    --color-sky-300: #0071a4;
-    --color-violet-200: #6e2fb3;
-    --color-violet-300: #8944ab;
-    --color-teal-300: #0c7f8a;
+    --color-glow: #0891b2;
+    --shadow-glass: 0 1px 2px rgb(9 9 11 / 0.04), 0 1px 1px rgb(9 9 11 / 0.02);
+    --shadow-float: 0 0 0 1px rgb(9 9 11 / 0.06), 0 24px 64px -16px rgb(9 9 11 / 0.22), 0 8px 20px -8px rgb(9 9 11 / 0.12);
+    --hero-glow: rgb(109 74 255 / 0.09);
+    --hero-glow-2: rgb(8 145 178 / 0.05);
+    /* status colours: readable on white */
+    --color-rose-200: #be123c;
+    --color-rose-300: #e11d48;
+    --color-emerald-200: #047857;
+    --color-emerald-300: #059669;
+    --color-amber-200: #b45309;
+    --color-amber-300: #c2610c;
+    --color-sky-300: #0369a1;
+    --color-violet-200: #6d28d9;
+    --color-violet-300: #7c3aed;
+    --color-teal-300: #0f766e;
   }
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --color-bg: #f2f2f7;
-  --color-panel: rgb(255 255 255 / 0.72);
-  --color-panel-2: rgb(255 255 255 / 0.85);
-  --color-panel-3: rgb(229 229 234 / 0.9);
+  --color-bg: #fafafa;
+  --color-sidebar: #f4f4f5;
+  --color-panel: #ffffff;
+  --color-panel-2: #f4f4f5;
+  --color-panel-3: #e9e9ec;
   --color-solid: #ffffff;
-  --color-line: rgb(60 60 67 / 0.12);
-  --color-line-2: rgb(60 60 67 / 0.2);
-  --color-ink: #1d1d1f;
-  --color-ink-2: rgb(60 60 67 / 0.8);
-  --color-ink-3: rgb(60 60 67 / 0.56);
-  --color-accent: #007aff;
-  --color-accent-2: #0062cc;
+  --color-line: rgb(9 9 11 / 0.08);
+  --color-line-2: rgb(9 9 11 / 0.14);
+  --color-ink: #09090b;
+  --color-ink-2: #52525b;
+  --color-ink-3: #85858f;
+  --color-accent: #6d4aff;
+  --color-accent-2: #5a36f0;
   --color-accent-ink: #ffffff;
-  --shadow-glass: 0 1px 0 0 rgb(255 255 255 / 0.8) inset, 0 1px 2px rgb(0 0 0 / 0.04), 0 8px 28px -12px rgb(0 0 0 / 0.14);
-  --shadow-float: 0 1px 0 0 rgb(255 255 255 / 0.9) inset, 0 24px 64px -18px rgb(0 0 0 / 0.28);
-  --backdrop-a: rgb(0 122 255 / 0.16);
-  --backdrop-b: rgb(175 82 222 / 0.12);
-  --backdrop-c: rgb(52 199 89 / 0.08);
-  --color-rose-200: #c41e3a;
-  --color-rose-300: #d70015;
-  --color-emerald-200: #1f7a35;
-  --color-emerald-300: #248a3d;
-  --color-amber-200: #a05a00;
-  --color-amber-300: #b25000;
-  --color-sky-300: #0071a4;
-  --color-violet-200: #6e2fb3;
-  --color-violet-300: #8944ab;
-  --color-teal-300: #0c7f8a;
+  --color-glow: #0891b2;
+  --shadow-glass: 0 1px 2px rgb(9 9 11 / 0.04), 0 1px 1px rgb(9 9 11 / 0.02);
+  --shadow-float: 0 0 0 1px rgb(9 9 11 / 0.06), 0 24px 64px -16px rgb(9 9 11 / 0.22), 0 8px 20px -8px rgb(9 9 11 / 0.12);
+  --hero-glow: rgb(109 74 255 / 0.09);
+  --hero-glow-2: rgb(8 145 178 / 0.05);
+  --color-rose-200: #be123c;
+  --color-rose-300: #e11d48;
+  --color-emerald-200: #047857;
+  --color-emerald-300: #059669;
+  --color-amber-200: #b45309;
+  --color-amber-300: #c2610c;
+  --color-sky-300: #0369a1;
+  --color-violet-200: #6d28d9;
+  --color-violet-300: #7c3aed;
+  --color-teal-300: #0f766e;
 }
 
 :root {
@@ -110,22 +123,17 @@ html,
 body {
   background-color: var(--color-bg);
   color: var(--color-ink);
-  font-feature-settings: "tnum";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
 }
 
-/* Soft colour field behind the glass, fixed so surfaces "float" over it */
 body {
-  font-size: 14px;
-  line-height: 1.45;
-  letter-spacing: -0.006em;
-  background-image:
-    radial-gradient(60rem 40rem at 8% -10%, var(--backdrop-a), transparent 60%),
-    radial-gradient(50rem 36rem at 105% 0%, var(--backdrop-b), transparent 60%),
-    radial-gradient(48rem 40rem at 50% 115%, var(--backdrop-c), transparent 60%);
-  background-attachment: fixed;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.5;
+  letter-spacing: -0.008em;
   min-height: 100dvh;
 }
 
@@ -139,16 +147,30 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid color-mix(in oklab, var(--color-accent) 55%, transparent);
+  outline: 2px solid color-mix(in oklab, var(--color-accent) 70%, transparent);
   outline-offset: 2px;
-  border-radius: 10px;
+  border-radius: 6px;
 }
 
-/* Translucent "material" surface */
+/* Frosted surface (sticky bars, overlays) */
 @utility glass {
-  background-color: var(--color-panel);
-  -webkit-backdrop-filter: saturate(180%) blur(24px);
-  backdrop-filter: saturate(180%) blur(24px);
+  background-color: color-mix(in oklab, var(--color-bg) 78%, transparent);
+  -webkit-backdrop-filter: saturate(160%) blur(16px);
+  backdrop-filter: saturate(160%) blur(16px);
+}
+
+/* Faint grid + glow behind page heroes */
+@utility hero-bg {
+  background-image:
+    radial-gradient(60rem 22rem at 15% -6rem, var(--hero-glow), transparent 70%),
+    radial-gradient(40rem 18rem at 95% -4rem, var(--hero-glow-2), transparent 70%);
+}
+
+@utility text-gradient {
+  background-image: linear-gradient(90deg, var(--color-accent-2), var(--color-glow));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 @layer components {
@@ -157,39 +179,42 @@ body {
     min-width: 0;
   }
   .card {
-    @apply glass rounded-[var(--radius-card)] border border-line;
+    @apply rounded-[var(--radius-card)] border border-line bg-panel;
     box-shadow: var(--shadow-glass);
   }
   .card-h {
-    @apply flex items-center justify-between gap-3 border-b border-line px-4 py-3;
+    @apply flex min-h-11 items-center justify-between gap-3 border-b border-line px-4 py-2.5;
   }
   .card-t {
-    @apply text-[13px] font-semibold tracking-tight text-ink;
+    @apply flex items-center gap-2 text-[13px] font-medium tracking-[-0.01em] text-ink;
   }
   .float {
-    @apply glass border border-line-2;
+    @apply border border-line-2 bg-panel;
     box-shadow: var(--shadow-float);
   }
 
-  /* Buttons: pill-shaped, tinted */
+  /* Buttons: compact, crisp */
   .btn {
-    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-line bg-panel-2 px-4 text-[13px] font-medium text-ink transition-[background-color,transform,box-shadow] duration-150 hover:bg-panel-3 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45;
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+    @apply inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] border border-line-2 bg-panel-2 px-3 text-[13px] font-medium whitespace-nowrap text-ink transition-[background-color,border-color,transform] duration-150 hover:border-line-2 hover:bg-panel-3 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45;
+    box-shadow: 0 1px 1px rgb(0 0 0 / 0.12);
   }
   .btn-primary {
-    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-full bg-accent px-4 text-[13px] font-semibold text-accent-ink transition-[background-color,transform,box-shadow] duration-150 hover:bg-accent-2 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-45;
-    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.18), rgb(255 255 255 / 0));
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 4px 14px -4px color-mix(in oklab, var(--color-accent) 70%, transparent);
+    @apply inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] bg-accent px-3 text-[13px] font-medium whitespace-nowrap text-accent-ink transition-[filter,transform] duration-150 hover:brightness-110 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45;
+    background-image: linear-gradient(180deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0));
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 60%, black) inset, 0 1px 0 rgb(255 255 255 / 0.2) inset,
+      0 4px 16px -6px color-mix(in oklab, var(--color-accent) 80%, transparent);
   }
   .btn-ghost {
-    @apply inline-flex h-9 items-center justify-center gap-1.5 rounded-full px-3 text-[13px] text-ink-2 transition-colors hover:bg-panel-2 hover:text-ink active:scale-[0.97];
+    @apply inline-flex h-8 items-center justify-center gap-1.5 rounded-[8px] px-2.5 text-[13px] text-ink-2 transition-colors hover:bg-panel-2 hover:text-ink active:scale-[0.98];
   }
   .input {
-    @apply h-9 w-full rounded-[10px] border border-line bg-panel-2 px-3 text-[14px] text-ink transition-[border-color,box-shadow] placeholder:text-ink-3 focus:border-accent focus:outline-none;
-    box-shadow: 0 1px 1px rgb(0 0 0 / 0.04) inset;
+    @apply h-8 w-full rounded-[8px] border border-line-2 bg-panel-2/60 px-2.5 text-[13.5px] text-ink transition-[border-color,box-shadow] placeholder:text-ink-3 focus:border-accent focus:outline-none;
   }
   .input:focus {
-    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-accent) 22%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent) 22%, transparent);
+  }
+  textarea.input {
+    @apply h-auto py-2;
   }
   select.input {
     @apply pr-8;
@@ -198,32 +223,36 @@ body {
     @apply mb-1.5 block text-[12px] font-medium text-ink-2;
   }
   .kbd {
-    @apply inline-flex h-[20px] min-w-[20px] items-center justify-center rounded-md border border-line bg-panel-2 px-1.5 font-sans text-[11px] font-medium text-ink-2;
+    @apply inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-[5px] border border-line-2 bg-panel-2 px-1 font-sans text-[10.5px] font-medium text-ink-3;
   }
   .table-row {
-    @apply border-b border-line transition-colors hover:bg-panel-2;
+    @apply border-b border-line transition-colors hover:bg-panel-2/70;
   }
   .th {
-    @apply sticky top-0 z-10 bg-solid/95 px-3 py-2.5 text-left text-[12px] font-medium text-ink-3 backdrop-blur;
+    @apply sticky top-0 z-10 bg-panel px-3 py-2 text-left text-[11.5px] font-medium tracking-[0.01em] text-ink-3;
+    box-shadow: 0 1px 0 var(--color-line);
   }
   .td {
-    @apply px-3 py-2.5 align-middle;
+    @apply px-3 py-2 align-middle;
+  }
+  .eyebrow {
+    @apply text-[11px] font-medium tracking-[0.06em] text-ink-3 uppercase;
   }
 
-  /* Segmented control (Apple-style tabs) */
+  /* Segmented control (tabs / view switches) */
   .segmented {
-    @apply inline-flex max-w-full gap-0.5 overflow-x-auto rounded-full border border-line bg-panel-3/60 p-0.5;
+    @apply inline-flex max-w-full gap-0.5 overflow-x-auto rounded-[9px] border border-line bg-panel-2/70 p-0.5;
   }
   .segment {
-    @apply flex h-8 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-medium text-ink-2 transition-colors hover:text-ink;
+    @apply flex h-7 shrink-0 items-center gap-1.5 rounded-[7px] px-3 text-[12.5px] font-medium text-ink-3 transition-colors hover:text-ink;
   }
   .segment[data-active="true"] {
-    @apply bg-solid text-ink;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12), 0 0 0 0.5px rgb(0 0 0 / 0.04);
+    @apply bg-panel-3 text-ink;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.2), 0 0 0 1px var(--color-line) inset;
   }
 }
 
-/* Touch devices: Apple's 44-pt minimum hit target */
+/* Touch devices: 44-pt minimum hit target */
 @media (pointer: coarse) {
   .btn,
   .btn-primary,
@@ -239,7 +268,7 @@ body {
   }
 }
 
-/* Installed app (standalone): no rubber-band background flash, respect the notch */
+/* Installed app (standalone): no rubber-band background flash */
 @media (display-mode: standalone) {
   html {
     overscroll-behavior-y: none;

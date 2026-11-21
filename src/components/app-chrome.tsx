@@ -17,7 +17,7 @@ function applyTheme(t: Theme) {
   try { localStorage.setItem(THEME_KEY, t); } catch { /* private mode */ }
   // keep the status-bar / title-bar colour in step
   const dark = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
-  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? "#000000" : "#f2f2f7"));
+  document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute("content", dark ? "#08080a" : "#fafafa"));
 }
 
 /** Apple-style segmented control: System · Light · Dark. */
@@ -95,7 +95,7 @@ export function InstallApp({ compact = false }: { compact?: boolean }) {
       </button>
       {showIosHelp && (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 p-3 sm:items-center" onClick={() => setShowIosHelp(false)}>
-          <div className="float w-full max-w-[380px] rounded-[22px] p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="float w-full max-w-[380px] rounded-[14px] p-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between">
               <div className="text-[17px] font-semibold">Install Squad CRM</div>
               <button className="btn-ghost -mr-2 -mt-1 h-8 w-8 px-0" onClick={() => setShowIosHelp(false)} aria-label="Close"><X size={16} /></button>

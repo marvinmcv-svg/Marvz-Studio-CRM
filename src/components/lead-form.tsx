@@ -208,7 +208,7 @@ export function LeadForm({ markets, services, existing, demo }: { markets: Opt[]
             <div className="flex items-center gap-1.5 text-[12px] text-ink-3"><Check size={13} className="text-emerald-300" /> No duplicates found so far</div>
           )}
         </section>
-        {outOfRegion && <div className="rounded-xl bg-rose-400/10 px-3 py-2.5 text-[12.5px] text-rose-300">Santa Cruz de la Sierra leads are never stored in the CRM.</div>}
+        {outOfRegion && <div className="rounded-[8px] bg-rose-400/10 px-3 py-2.5 text-[12.5px] text-rose-300">Santa Cruz de la Sierra leads are never stored in the CRM.</div>}
         {error && <div className="rounded-lg bg-rose-400/10 px-3 py-2 text-[12px] text-rose-300">{error}</div>}
         <div className="flex gap-2">
           <button className="btn-primary flex-1 justify-center" disabled={pending || !f.business || dnc.length > 0 || outOfRegion}>{pending ? "Creating…" : f.hold ? "Create held lead" : "Create lead"}</button>

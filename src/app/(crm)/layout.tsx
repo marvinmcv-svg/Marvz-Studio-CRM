@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function CrmLayout({ children }: { children: React.ReactNode }) {
   const me = await getMe();
   if (!me) redirect((await getAuthState()) === "not_linked" ? "/login?reason=not_linked" : "/login");
-  const t = await getTables("agents", "leads", "companies", "approval_batches", "escalations", "milestones");
+  const t = await getTables("agents", "leads", "companies", "approval_batches", "escalations", "milestones", "activity_log");
   const companies = new Map(t.companies.map((c) => [c.id, c]));
   const leads = t.leads.map((l) => ({
     id: l.id, code: `SQ-${l.ref}`, name: companies.get(l.company_id)?.name ?? "Unknown", stage: l.stage,
@@ -18,11 +18,17 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
   }));
   const open = openEscalations(t.escalations);
   const agent = t.agents.find((a) => a.code === me.code);
+  // roster for the sidebar: each AI agent with its latest action (activity_log is newest-first)
+  const squad = t.agents.filter((a) => a.kind === "ai").map((a) => {
+    const last = t.activity_log.find((x) => x.agent_code === a.code);
+    return { code: a.code, name: a.name, title: a.title, color: a.color, kind: a.kind, lastAt: last?.created_at ?? null, lastSummary: last?.summary ?? null };
+  });
   return (
     <Shell
       demo={me.demo}
       me={{ name: me.name, code: me.code, color: agent?.color ?? "#8b7cff" }}
       leads={leads}
+      squad={squad}
       badges={{
         approvals: t.approval_batches.filter((b) => b.status === "pending").length,
         escalations: open.length,
